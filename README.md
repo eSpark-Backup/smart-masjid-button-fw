@@ -70,3 +70,14 @@ To upload the server.crt file to SPIFFS:
 3. Open Arduino IDE, then go to partition Scheme select 8MB with spiffs.
 4. Then go to Tools > ESP32 Sketch Data Upload to upload the server.crt to the device's SPIFFS. 
 
+## Change in the Audio.h file 
+![image](https://github.com/user-attachments/assets/da2e446b-6527-4df9-82ad-ca7283edc6c8)
+
+* Go to the Audio.h located in the ESP32-audioI2S-master folder and serach m_timeout_ms then just multiply the value with 5.(m_timeout_ms = 250 *5;)
+* Otherwise  audio library will fail to connect  host(adhan stream url)
+
+## Modify The MQTT_MAX_PACKET_SIZE
+![image](https://github.com/user-attachments/assets/d95e996b-85a2-42e5-9f77-c1a1b35effed)
+
+* Go to the PubSubClient.h and serach MQTT_MAX_PACKET_SIZE then update it to 4000.
+* Otherwise the Ota Url payload Will not be recieved during Ota Update.
