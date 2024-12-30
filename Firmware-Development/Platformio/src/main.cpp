@@ -8,12 +8,14 @@
 #include "Sources/Mqtt.hpp"
 #include "Sources/Device.hpp"
 #include "Sources/SM_Nvs.hpp"
+#include  "Sources/CertificateHandler.hpp"
 
 SET_LOOP_TASK_STACK_SIZE( 16*1024 ); // 16KB
 
 WifiProvisioning wifiProv;
 Button button(SMBTN_GPIO);
 MQTTClient mqtt(&wifiProv);
+CertificateHandler certificateHandler;
 
 void setup() 
 {
@@ -49,6 +51,9 @@ void setup()
   {
     delay(100);
   }
+
+  certificateHandler.setup();
+  certificateHandler.print();
 
   mqtt.createTask(); 
   button.setup();

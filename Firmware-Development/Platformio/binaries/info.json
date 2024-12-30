@@ -1,0 +1,25 @@
+{
+    "version": "1.0.0",
+    "build": 197,
+    "build_date": "2024-09-20T07:13:31+0000",
+    "chip_type": "ESP32-WROOM-32E-N8R2",
+    "flash_size": "8MB",
+    "binaries": [
+        {
+            "address": "0x1000",
+            "file": "bootloader.bin"
+        },
+        {
+            "address": " 0x10000",
+            "file": "firmware.bin"
+        },
+        {
+            "address": "0x8000",
+            "file": "partitions.bin"
+        },
+	{
+            "address": "0x310000",
+            "file": "spiffs.bin"
+        }
+    ]
+}
