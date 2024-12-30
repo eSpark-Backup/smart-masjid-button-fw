@@ -48,10 +48,41 @@ Follow these steps to upload the server.crt file to the ESP32 SPIFFS:
 
 ![image](https://github.com/user-attachments/assets/04e1a16d-9f66-41a9-aba9-78c6f7af1345)
 
+6- **Demo video link**
+[](https://www.loom.com/share/f365b2b5d782472e8970aae6634bd5bf?sid=1906fb31-ed4c-4add-914f-2bdc1071db29)
+
 ## ESP32 Board and Libreries:
     - Esp32 Board Version (Version : 2.0.6) 
     - PubSubClient (Version : 2.8)
     - ArduinoJson (Version : 7.2.1)
+
+## Upload Binaries on ESP32:
+Follow these steps to upload the binary files to the ESP32 through `flash_download_tool`:
+### Required Software
+1. [ESP32 Flash Download Tool](https://www.espressif.com/sites/default/files/tools/flash_download_tool_3.9.4.zip)
+
+### Testing procedure
+1. Connect the ESP32 Dev Module to the PC via MicroUSB cable.
+2. Open flash download tool and select *Chip Type* as *ESP32* and *WorkMode* as *Develop*. Press *OK* to move to the next screen. 
+3. Select correct *COM Port* and set *Baud rate* to *115200* and then click erase button on new window that opens, to first completely wipe off the ESP32 memory.
+4. Upload the provided binaries as follows:
+   ```
+      * bootloader.bin  OR  bootloader.bin -> 0x1000
+      * partitions.bin  OR  partitions.bin -> 0x8000
+      * firmware.bin    OR  firmware.bin   -> 0x10000
+      * spiffs.bin      OR  spiffs.bin    -> 0x310000
+    ```
+5. Press the start button to start the flashing process.
+6. Once finished, close the software and reset the ESP32 using EN button on the Dev Module. For the custom board, you can power cycle the board (turning power ON/OFF)
+7. Open termite serial terminal and connect to ESP32 serial port at baud rate of 115200 in order to observe console log.
+8. The ESP32 will first go into WiFi mode and search its memory for stored WiFi credentials, failing to find any, it will fallback to BLE mode.
+9. Supply the WiFi credentials using Smart Masjid App or alternatively nRF Connect app at READ characteristic in JSON format as below:  
+ { "ssid":"string", "pass":"string", "masjid_id":"string" }
+10. After receiving, the device will initiate connection to internet and after successful connection, it will hit an API to tell the cloud its online and save provided credentials in EEPROM (permanent memory)
+11. For another cycle of testing, repeat all the above steps.
+12. Demo video link:
+    [Upload Binaries Demo Link](https://www.loom.com/share/412dfff911c84de7bd726a3a6ad232f1?sid=ba3c8dc7-31e9-4fb5-bad0-06bdca803d01)
+
 
 
  
