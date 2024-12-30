@@ -49,7 +49,7 @@ Follow these steps to upload the server.crt file to the ESP32 SPIFFS:
 ![image](https://github.com/user-attachments/assets/04e1a16d-9f66-41a9-aba9-78c6f7af1345)
 
 6- **Demo video link**
-[](https://www.loom.com/share/f365b2b5d782472e8970aae6634bd5bf?sid=1906fb31-ed4c-4add-914f-2bdc1071db29)
+[Upload Certificate on esp32 SPIFFS(Demo video)](https://www.loom.com/share/f365b2b5d782472e8970aae6634bd5bf?sid=1906fb31-ed4c-4add-914f-2bdc1071db29)
 
 ## ESP32 Board and Libreries:
     - Esp32 Board Version (Version : 2.0.6) 
@@ -81,7 +81,7 @@ Follow these steps to upload the binary files to the ESP32 through `flash_downlo
 10. After receiving, the device will initiate connection to internet and after successful connection, it will hit an API to tell the cloud its online and save provided credentials in EEPROM (permanent memory)
 11. For another cycle of testing, repeat all the above steps.
 12. Demo video link:
-    [Upload Binaries Demo Link](https://www.loom.com/share/412dfff911c84de7bd726a3a6ad232f1?sid=ba3c8dc7-31e9-4fb5-bad0-06bdca803d01)
+    [Upload Binaries (Demo video](https://www.loom.com/share/412dfff911c84de7bd726a3a6ad232f1?sid=ba3c8dc7-31e9-4fb5-bad0-06bdca803d01)
 
 
 
