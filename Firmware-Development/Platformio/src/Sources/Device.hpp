@@ -1,7 +1,7 @@
 #pragma once
 
-#define SM_MODEL "SBB23V1"
-#define SM_FIRMWARE_VER "1.0"
+// #define SM_MODEL "SBB23V1"
+// #define SM_FIRMWARE_VER "1.0"
 #define BLE_MAC_OFFSET 2
 #define BATTERY_HEALTH 90
 #define MASJID_ID_TEST 3
@@ -15,6 +15,10 @@
 #define TIMER_PRESCALAR_1MHZ 80
 #define TIMER_ONE_SECOND_COUNTS 1000000
 #define TELEMETRY_UPDATE_TIME 1 * 60 // telemetry update time in seconds
+
+// ESP Sleep Mode Parameters 
+#define SLEEP_DURATION  5    // 5 minutes
+#define MAX_WIFI_RETRIES  10             // 10 retry to connect wifi before sleep
 
 class Device 
 {

@@ -2,6 +2,7 @@
 #include "SM_Http.hpp"
 #include"CertificateHandler.hpp"
 #include "Device.hpp"
+#include "HttpsOTAUpdate.cpp"
 
 AWS_OTA* AWS_OTA::instance = nullptr;
 
@@ -31,6 +32,8 @@ void AWS_OTA::httpEventHandler(HttpEvent_t *event)
 
 void AWS_OTA::setup()
 {
+  config.buffer_size = 2048;
+  config.buffer_size_tx = 2048;
   HttpsOTA.onHttpEvent(httpEventHandler);
   Serial.println("Starting OTA");
   HttpsOTA.begin(deviceOtaUrl, server_certificate);
@@ -74,7 +77,7 @@ void AWS_OTA::startFirmwareUpdate(const char* url)
 {
   deviceOtaUrl = url;
   Serial.println(deviceOtaUrl);
-  
+
   // CertificateHandler certificateHandler;
   certificateHandler.setup();
   certificateHandler.isExist();

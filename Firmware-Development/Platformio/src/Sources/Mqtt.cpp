@@ -1,6 +1,7 @@
 #include <ArduinoJson.h>
 #include "Mqtt.hpp"
 #include "WifiProvisioning.hpp"
+#include "CertificateHandler.hpp"
 #include "SM_Json.hpp"
 #include "SM_Nvs.hpp"
 #include "SM_Http.hpp"
@@ -8,6 +9,19 @@
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
+
+char mqttObj[120];
+char mqttServer[40];
+char mqttUsername[8];
+char mqttPassword[8];
+
+void loadConfigfromfile() {
+  const char* json = certificateHandler.get(FILE_JSON);
+  SM_Json::parse(json , std::make_pair("mqtt", mqttObj));
+  SM_Json::parse((const char*)(mqttObj) , std::make_pair("broker", mqttServer));
+  SM_Json::parse((const char*)(mqttObj) , std::make_pair("user_name", mqttUsername));
+  SM_Json::parse((const char*)(mqttObj) , std::make_pair("password", mqttPassword));
+}
 
 bool MQTTClient::setup() 
 {
@@ -35,7 +49,9 @@ bool MQTTClient::connectToBroker(int retries)
 
 bool MQTTClient::connectToBroker() 
 {
+  loadConfigfromfile();
   mqttClient.setServer(mqttServer, mqttPort);
+  mqttClient.setBufferSize(2048);
   static std::string clientId = std::to_string(random(1000000000));
   Serial.print("Client id : ");
   Serial.println(clientId.c_str());
@@ -125,6 +141,7 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
     {
       AWS_OTA& ota = *AWS_OTA::getInstance();
       char* url = SM_Json::parseDynamic((const char*)payload);
+      // char *url = "http://192.168.2.197:80/ota";
       ota.startFirmwareUpdate(url);
       break;
     }
@@ -277,14 +294,62 @@ bool MQTTClient::unsubscribeTopics()
   return true;
 }
 
+// void MQTTClient::mqttCallback() 
+// {
+//     Serial.println("MQTT client not connected. Reconnecting...");
+//     printState();
+//     Serial.print("\nWIFI RSSI : ");
+//     Serial.println(WiFi.RSSI());
+//     connectToBroker(10);
+// }
+
 void MQTTClient::mqttCallback() 
 {
-    Serial.println("MQTT client not connected. Reconnecting...");
-    printState();
-    Serial.print("\nWIFI RSSI : ");
-    Serial.println(WiFi.RSSI());
-    connectToBroker(10);
-}
+      Serial.println("MQTT client not connected. Reconnecting...");
+      printState();
+      Serial.print("WIFI RSSI : ");
+      Serial.println(WiFi.RSSI());
+
+      int retryCount = 0;
+      const int maxRetries = MAX_WIFI_RETRIES;
+      
+      while (WiFi.status() != WL_CONNECTED && retryCount < maxRetries) {
+        Serial.print("WiFi disconnected. Retrying (");
+        Serial.print(retryCount + 1);
+        Serial.println("/10)...");
+        WiFi.disconnect();
+        WifiProvisioning::wifiServiceStarted = false;
+        delay(1000);
+        WiFi.reconnect();
+        delay(2000); 
+        retryCount++;
+    }
+      if (WiFi.status() != WL_CONNECTED){
+        Serial.println("Failed to reconnect after 10 attempts. Entering sleep mode...");
+        Serial.println("Enter Sleep mode for 5 minutes.");
+        delay(10);
+        esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 1 minute in microseconds
+        esp_light_sleep_start();
+      }
+      else {
+          Serial.println("WiFi Reconnected Successfully!");
+          if(connectToBroker(5))
+          {
+            WifiProvisioning::wifiServiceStarted = true;
+            Serial.println("Wifi connection established successfullly");
+          } 
+          else 
+          {
+            WifiProvisioning::wifiServiceStarted = false;
+            Serial.println("Failed to established connection....");
+            Serial.println("Failed to reconnect after 5 attempts. Entering sleep mode...");
+            Serial.println("Sleep mode for 5 minutes.");
+            delay(10);
+            esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 1 minute in microseconds
+            esp_light_sleep_start();
+          }
+      }
+  }
 
 void MQTTClient::printState()
 {

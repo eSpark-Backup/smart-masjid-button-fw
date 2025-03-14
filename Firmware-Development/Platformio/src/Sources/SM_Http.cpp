@@ -8,9 +8,24 @@
 #include "Device.hpp"
 #include "BLE.hpp"
 #include "Mqtt.hpp"
+char http[150];
+char smHost[50];
+char externalApiKey[70];
+char device[70];
+char smFirmware[6];
+
+void loadConfigFromFile() {
+  const char* json = certificateHandler.get(FILE_JSON);
+  SM_Json::parse(json, std::make_pair("http", http));
+  SM_Json::parse((const char*)(http), std::make_pair("host", smHost));
+  SM_Json::parse((const char*)(http) , std::make_pair("api_key", externalApiKey));
+  SM_Json::parse(json , std::make_pair("device_info", device));
+  SM_Json::parse((const char*)(device) , std::make_pair("firmware_ver", smFirmware));
+}
 
 HttpStatusCode SmHttp::startAdhan() 
 {
+  loadConfigFromFile();
   std::string startAdhanUrl = smHost;
   startAdhanUrl += adhanStartEndpoint;
 
@@ -40,6 +55,7 @@ HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress, uint8_t retry
 
 HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress) 
 {
+  loadConfigFromFile();
   std::string deviceTelemetryUrl = smHost;
   deviceTelemetryUrl += telemetryEndpoint;
 
@@ -65,6 +81,7 @@ HttpStatusCode SmHttp::stopAdhan()
 
 HttpStatusCode SmHttp::resetAdhan() 
 {
+  loadConfigFromFile();
   if (WiFi.status() != WL_CONNECTED)
     return false;
 
@@ -79,11 +96,12 @@ HttpStatusCode SmHttp::resetAdhan()
 
 HttpStatusCode SmHttp::notifyOTAUpdate(const char* macAddress) 
 {  
+  loadConfigFromFile();
   std::string updateOnLoadUrl = smHost;
   updateOnLoadUrl += OtaUpdateEndpoint;
 
   char updateOnLoadUrlJson[64];
-  snprintf(updateOnLoadUrlJson, sizeof(updateOnLoadUrlJson), "{\"macAddress\":\"%s\",\"firmwareVersion\":\"%s\"}", Device::macAddress, SM_FIRMWARE_VER);
+  snprintf(updateOnLoadUrlJson, sizeof(updateOnLoadUrlJson), "{\"macAddress\":\"%s\",\"firmwareVersion\":\"%s\"}", Device::macAddress, smFirmware);
   // SM_Json::create(updateOnLoadUrlJson, sizeof(updateOnLoadUrlJson), std::make_pair("macAddress", Device::macAddress), std::make_pair("firmwareVersion", SM_FIRMWARE_VER));
   Serial.println(updateOnLoadUrlJson);
   return request(updateOnLoadUrl.c_str(), updateOnLoadUrlJson, Http::RequestType::PUT);
@@ -122,7 +140,7 @@ HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestT
   https.setReuse(false);
   https.begin(client, url);
   https.addHeader("Content-Type", "application/json");
-  https.addHeader("x-api-key", EXTERNAL_API_KEY);
+  https.addHeader("x-api-key", externalApiKey);
   HttpStatusCode status = Http::Response::UNKNOWN;;
   Serial.print("\nWIFI RSSI : ");
   Serial.println(WiFi.RSSI());
