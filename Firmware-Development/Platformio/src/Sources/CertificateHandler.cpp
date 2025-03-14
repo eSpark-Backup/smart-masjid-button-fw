@@ -1,6 +1,7 @@
 
 #include"CertificateHandler.hpp"
 
+CertificateHandler certificateHandler;
 // Method to initialize SPIFFS
 void CertificateHandler::setup() 
 {
@@ -73,8 +74,38 @@ void CertificateHandler::print()
   Serial.println();
 }
 
-char* CertificateHandler::get() {
-  File file = SPIFFS.open(FILE_TITLE, FILE_READ);
+// char* CertificateHandler::get() {
+//   File file = SPIFFS.open(FILE_TITLE, FILE_READ);
+//   if (!file) 
+//   {
+//     Serial.println("Failed to open file for reading");
+//     return nullptr;
+//   }
+
+//   size_t size = file.size();  // Get the size of the file
+//   if (size == 0) 
+//   {
+//     Serial.println("File is empty");
+//     file.close();
+//     return nullptr;
+//   }
+//   char* content = new char[size + 1]; 
+//   if (content == nullptr) 
+//   {
+//     Serial.println("Failed to allocate memory");
+//     file.close();
+//     return nullptr;
+//   }
+
+//   file.readBytes(content, size);
+//   content[size] = '\0';
+
+//   file.close();
+//   return content;
+// }
+
+char* CertificateHandler::get(const char* filename) {
+  File file = SPIFFS.open(filename, FILE_READ);
   if (!file) 
   {
     Serial.println("Failed to open file for reading");

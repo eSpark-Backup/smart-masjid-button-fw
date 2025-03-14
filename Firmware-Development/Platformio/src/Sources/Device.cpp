@@ -119,6 +119,20 @@ void Device::memoryMonitoring()
     Serial.println(uxTaskGetStackHighWaterMark(NULL));
     Serial.print("Free Heap Space: ");
     Serial.println(ESP.getFreeHeap());
+    Serial.print("3- Maximum allocated Heap : ");
+    Serial.println(ESP.getMaxAllocHeap());
+    Serial.print("4- Free Heap Space: ");
+    Serial.println(ESP.getFreeHeap());
+    Serial.print("5- Minimum Free Heap Space: ");
+    Serial.println(esp_get_minimum_free_heap_size());
+    Serial.print("\n");
+    Serial.print("Total PSRAM: ");
+    Serial.print(ESP.getPsramSize() / 1024);
+    Serial.println(" KB");
+    Serial.print("Free PSRAM: ");
+    Serial.print(ESP.getFreePsram() / 1024);
+    Serial.println(" KB");
+    
     lastExecution = currentTime;
   }
 }

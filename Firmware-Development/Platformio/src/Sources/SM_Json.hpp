@@ -85,9 +85,30 @@ class SM_Json
         return false;
       }
     
-      const char* value = obj[pair.first];
-      uint8_t len = strlen(value);
-      memcpy(pair.second, value, len + 1);
+      // const char* value = obj[pair.first];
+      // uint8_t len = strlen(value);
+      // memcpy(pair.second, value, len + 1);
+
+      JsonVariant value = obj[pair.first];
+
+      if (value.is<const char*>()) 
+      {
+          // Case 1: If the value is a string, copy it
+          const char* strValue = value.as<const char*>();
+          uint8_t len = strlen(strValue);
+          memcpy(pair.second, strValue, len + 1);
+          Serial.printf("Key: %s, String Value: %s, Length: %d\n", pair.first, strValue, len);
+      } 
+      else if (value.is<JsonObject>()) 
+      {
+          // Case 2: If the value is a JSON object, serialize it and copy
+          size_t jsonSize = measureJson(value);
+          char jsonBuffer[jsonSize + 1];  // Allocate buffer dynamically
+          serializeJson(value, jsonBuffer, sizeof(jsonBuffer));
+  
+          memcpy(pair.second, jsonBuffer, jsonSize + 1);
+          Serial.printf("Key: %s, JSON Object Size: %d\n", pair.first, jsonSize);
+      }
     
       return parseValues(doc, rest...);
     }

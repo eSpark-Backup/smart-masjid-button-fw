@@ -9,21 +9,28 @@
 #include "Sources/Device.hpp"
 #include "Sources/SM_Nvs.hpp"
 #include  "Sources/CertificateHandler.hpp"
+#include "Sources/WifiMonitoring.hpp"
+
 
 SET_LOOP_TASK_STACK_SIZE( 16*1024 ); // 16KB
 
 WifiProvisioning wifiProv;
 Button button(SMBTN_GPIO);
 MQTTClient mqtt(&wifiProv);
-CertificateHandler certificateHandler;
+WifiMonitoring wifiMonitor;
+// CertificateHandler certificateHandler;
 
 void setup() 
 {
   Serial.begin(115200);
+  LED& rgb = *LED::getInstance();
+  rgb.createTask();
+  rgb.currentMode = MODE::ON_POWER_UP; 
+  certificateHandler.setup();
   Device::checkMacAddress();
   Serial.printf("Arduino Stack was set to %d bytes\n", getArduinoLoopTaskStackSize());
   BLE::setup(&wifiProv);
-
+  
   if(wifiProv.connectWifiFromNVS())
   {
     while(!wifiProv.isTelemetrySent())
@@ -52,7 +59,7 @@ void setup()
     delay(100);
   }
 
-  certificateHandler.setup();
+  
   certificateHandler.print();
 
   mqtt.createTask(); 
@@ -62,6 +69,7 @@ void setup()
 
 void loop() 
 { 
+  wifiMonitor.MonitorWifi();
   button.loop();
   Device::loop();
   Device::memoryMonitoring();

@@ -23,12 +23,20 @@ class MyServerCallbacks : public BLEServerCallbacks
   void onConnect(BLEServer *pServer)
   {
     Serial.println("BLE : device connected");
+    char device[70];
+    char smModel[24];
+    char smFirmware[24];
+    const char* json = certificateHandler.get(FILE_JSON);
+
+    SM_Json::parse(json , std::make_pair("device_info", device));
+    SM_Json::parse((const char*)(device) , std::make_pair("model", smModel));
+    SM_Json::parse((const char*)(device) , std::make_pair("firmware_ver", smFirmware));
     
     char factoryInfoJson[100];
     SM_Json::create(factoryInfoJson, sizeof(factoryInfoJson),
-                        std::make_pair("device_model", SM_MODEL),
+                        std::make_pair("device_model", smModel),
                         std::make_pair("mac_address", Device::macAddress),
-                        std::make_pair("firmware_rev", SM_FIRMWARE_VER));                                         
+                        std::make_pair("firmware_rev", smFirmware));                                         
     Serial.println(factoryInfoJson);
     
     pDeviceCharacteristic->setValue(factoryInfoJson);
@@ -136,7 +144,8 @@ bool BLE::initialize()
   // Start advertising
   pServer->getAdvertising()->start();
   Serial.println("Waiting a client connection to notify...");
-
+  LED& rgb = *LED::getInstance();
+  rgb.currentMode = MODE::BLE;
   status = BLE_STARTED;
   return true;
 }
@@ -146,6 +155,9 @@ void BLE::stop(void)
   // Delete BLE server
   BLEDevice::deinit(true);
   Serial.println("BLE Stopped"); 
+  LED& rgb = *LED::getInstance();
+  rgb.currentMode = MODE::WIFI_CONNECTED; 
+  WifiProvisioning::wifiServiceStarted = true;
   status = BLE_STOPPED;
 }
 

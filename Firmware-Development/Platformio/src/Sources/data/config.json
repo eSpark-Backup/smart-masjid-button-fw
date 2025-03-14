@@ -1,0 +1,15 @@
+{
+    "device_info": {
+      "model": "SBB23V1",
+      "firmware_ver": "1.1"
+    },
+    "http": {
+      "host": "https://smartmasjid-api-qa.futuriklabs.com",
+      "api_key": "b8z6X5fzbjNDGHz15XtPVzEkO3h5mCT7q4Ei8AupX9DD12PxL94rhnZHarHc8O2H"
+    },
+    "mqtt": {
+      "user_name": "device",
+      "password": "device",
+      "broker": "smartmasjid-broker-dev.futuriklabs.com"
+    }
+  }

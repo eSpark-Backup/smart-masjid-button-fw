@@ -33,6 +33,7 @@ class WifiProvisioning : public IWifiProvisioning
     telemetryStatus deviceTelemetryStatus = TELEMETRY_NOTSENT;
     
   public:
+    static volatile bool wifiServiceStarted;
     bool connectWifiFromNVS(void);
     bool connectWifi(const char* ssid, const char* pass, int retries = WIFI_RETRY) override;
     void wifiGotIP(WiFiEvent_t event, WiFiEventInfo_t info);

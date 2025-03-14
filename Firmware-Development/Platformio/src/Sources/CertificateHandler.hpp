@@ -2,6 +2,7 @@
 #include "SPIFFS.h"
 
 #define FILE_TITLE "/server.crt"
+#define FILE_JSON "/config.json"
 
 class CertificateHandler 
 {
@@ -10,5 +11,7 @@ class CertificateHandler
     void isExist(); 
     void write(const char* content); 
     void print(); 
-    char* get();
+    char* get(const char* filename);
 };
+
+extern CertificateHandler certificateHandler;

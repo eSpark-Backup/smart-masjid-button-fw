@@ -75,11 +75,11 @@ void AWS_OTA::startFirmwareUpdate(const char* url)
   deviceOtaUrl = url;
   Serial.println(deviceOtaUrl);
   
-  CertificateHandler certificateHandler;
+  // CertificateHandler certificateHandler;
   certificateHandler.setup();
   certificateHandler.isExist();
   //certificateHandler.write(server_certificate);  // Write new content in  to the file
-  server_certificate = certificateHandler.get();  // Get the content of the file as a char array
+  server_certificate = certificateHandler.get(FILE_TITLE);  // Get the content of the file as a char array
   if (server_certificate) 
   {
     Serial.print("server_certificate content via get(): ");
