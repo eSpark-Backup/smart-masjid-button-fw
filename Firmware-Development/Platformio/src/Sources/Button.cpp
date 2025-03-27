@@ -10,16 +10,26 @@ uint32_t Button::adhanStartTime = 0;
 TickType_t buttonPressStartTime = 0;
 SmHttp smHttp;
 
+volatile uint32_t lastInterruptTime = 0;  // Track last interrupt time for debounce
+const uint32_t debounceDelay = 200;  // Debounce delay in milliseconds
+
 void Button::setup()
 {
   pinMode(pin, INPUT_PULLUP);
-  attachInterrupt(pin, std::bind(&Button::interruptHandler, this), FALLING);
+  attachInterrupt(pin, std::bind(&Button::interruptHandler, this), RISING);
     // attachInterrupt(pin, interruptHandler, FALLING);
 }
 
 void Button::interruptHandler()
 {
-  Button::counter++;
+    uint32_t currentTime = millis(); 
+  if (currentTime - lastInterruptTime > debounceDelay)  
+  {
+    lastInterruptTime = currentTime;  // Update last press time
+    Button::counter++;
+    Serial.print("counter: ");
+    Serial.println(counter);
+  }
 }
 
 void Button::loop()
