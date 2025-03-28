@@ -1,6 +1,7 @@
 #pragma once
 
 #define SMBTN_GPIO 26
+#define RESET_GPIO 32
 
 enum buttonState
 {

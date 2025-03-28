@@ -8,6 +8,7 @@ bool Button::resetFlag = false;
 extern volatile buttonState state = UNPRESSED;
 uint32_t Button::adhanStartTime = 0;
 TickType_t buttonPressStartTime = 0;
+TickType_t resetButtonPressStartTime = 0;
 SmHttp smHttp;
 
 volatile uint32_t lastInterruptTime = 0;  // Track last interrupt time for debounce
@@ -16,6 +17,7 @@ const uint32_t debounceDelay = 1000;  // Debounce delay in milliseconds
 void Button::setup()
 {
   pinMode(pin, INPUT_PULLUP);
+  pinMode(RESET_GPIO, INPUT_PULLUP);
   attachInterrupt(pin, std::bind(&Button::interruptHandler, this), FALLING);
     // attachInterrupt(pin, interruptHandler, FALLING);
 }
@@ -34,6 +36,27 @@ void Button::interruptHandler()
 
 void Button::loop()
 {
+  if (digitalRead(RESET_GPIO) == LOW) // Check reset button
+  {
+    if (resetButtonPressStartTime == 0)
+    {
+      resetButtonPressStartTime = xTaskGetTickCount();
+    }
+    else if ((xTaskGetTickCount() - resetButtonPressStartTime) >= pdMS_TO_TICKS(3000))
+    {
+      Serial.println("Reset button pressed for 5 seconds. Restarting...");
+      delay(1000); // Small delay to avoid accidental reset
+      // esp_restart(); // Restart the ESP32
+      Device::deleteMasjidId();
+      Device::deleteWificredentials();
+      ESP.restart();
+    }
+  }
+  else
+  {
+    resetButtonPressStartTime = 0;
+  }
+
   if (digitalRead(SMBTN_GPIO) == LOW)
   {
     if (buttonPressStartTime == 0)

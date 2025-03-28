@@ -1,7 +1,7 @@
 {
     "device_info": {
       "model": "SBB23V1",
-      "firmware_ver": "1.1"
+      "firmware_ver": "1.2"
     },
     "http": {
       "host": "https://smartmasjid-api-qa.futuriklabs.com",
