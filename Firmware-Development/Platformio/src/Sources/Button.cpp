@@ -42,7 +42,7 @@ void Button::loop()
     {
       resetButtonPressStartTime = xTaskGetTickCount();
     }
-    else if ((xTaskGetTickCount() - resetButtonPressStartTime) >= pdMS_TO_TICKS(3000))
+    else if ((xTaskGetTickCount() - resetButtonPressStartTime) >= pdMS_TO_TICKS(5000))
     {
       Serial.println("Reset button pressed for 5 seconds. Restarting...");
       delay(1000); // Small delay to avoid accidental reset
