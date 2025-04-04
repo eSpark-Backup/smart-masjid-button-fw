@@ -6,8 +6,23 @@
     "flash_size": "8MB",
     "binaries": [
         {
-            "address": "0x000",
-            "file": "target.bin"
+            "address": "0x1000",
+            "file": "bootloader.bin"
+        },
+        {
+            "address": " 0x10000",
+            "file": "firmware.bin"
+        },
+        {
+            "address": "0x8000",
+            "file": "partitions.bin"
+        },
+	{
+            "address": "0x3D0000",
+            "file": "spiffs.bin"
         }
     ]
 }
+
+
+

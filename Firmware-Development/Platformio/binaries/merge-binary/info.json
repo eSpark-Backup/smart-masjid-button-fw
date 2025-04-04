@@ -1,0 +1,13 @@
+{
+    "version": "1.0.0",
+    "build": 197,
+    "build_date": "2024-09-20T07:13:31+0000",
+    "chip_type": "ESP32-WROOM-32E-N8R2",
+    "flash_size": "8MB",
+    "binaries": [
+        {
+            "address": "0x000",
+            "file": "target.bin"
+        }
+    ]
+}
