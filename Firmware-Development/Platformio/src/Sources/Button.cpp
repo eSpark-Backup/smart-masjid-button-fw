@@ -12,8 +12,8 @@ TickType_t resetButtonPressStartTime = 0;
 SmHttp smHttp;
 
 volatile uint32_t lastInterruptTime = 0;  // Track last interrupt time for debounce
-const uint32_t debounceDelay = 1000;  // Debounce delay in milliseconds
-
+const uint32_t debounceDelay = 200;  // Debounce delay in milliseconds
+volatile bool waitingForRelease = false;
 void Button::setup()
 {
   pinMode(pin, INPUT_PULLUP);
@@ -25,17 +25,22 @@ void Button::setup()
 void Button::interruptHandler()
 {
     uint32_t currentTime = millis(); 
-  if (currentTime - lastInterruptTime > debounceDelay)  
+  if (currentTime - lastInterruptTime > debounceDelay && !waitingForRelease)  
   {
     lastInterruptTime = currentTime;  // Update last press time
     Button::counter++;
-    Serial.print("counter: ");
-    Serial.println(counter);
+    waitingForRelease = true;
+
   }
 }
 
 void Button::loop()
 {
+  if (waitingForRelease && digitalRead(SMBTN_GPIO) == HIGH)
+  {
+    waitingForRelease = false; // Button released, allow next press
+  }
+  
   if (digitalRead(RESET_GPIO) == LOW) // Check reset button
   {
     if (resetButtonPressStartTime == 0)

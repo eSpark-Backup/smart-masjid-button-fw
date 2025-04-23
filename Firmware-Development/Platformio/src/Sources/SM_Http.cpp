@@ -8,6 +8,7 @@
 #include "Device.hpp"
 #include "BLE.hpp"
 #include "Mqtt.hpp"
+#include "SM_Nvs.hpp"
 char http[150];
 char smHost[50];
 char externalApiKey[70];
@@ -28,8 +29,13 @@ HttpStatusCode SmHttp::startAdhan()
   loadConfigFromFile();
   std::string startAdhanUrl = smHost;
   startAdhanUrl += adhanStartEndpoint;
+  
+  char masjidId[32];
+  Sm_Nvs::get(DEVICE_FACTORY_INFO_NAMESPACE,
+    std::make_pair("masjidId", masjidId));
 
-  std::string jsonString = SM_Json::create("masjidId", &MASJID_TEST_ID);
+  std::string jsonString = SM_Json::create("masjidId", masjidId);
+  Serial.println(jsonString.c_str());
 
   return request(startAdhanUrl.c_str(), jsonString.c_str());
 }
@@ -72,8 +78,12 @@ HttpStatusCode SmHttp::stopAdhan()
 {
   std::string stopAdhanUrl = smHost;
   stopAdhanUrl += adhanStopEndpoint;
+  
+  char masjidId[32];
+  Sm_Nvs::get(DEVICE_FACTORY_INFO_NAMESPACE,
+    std::make_pair("masjidId", masjidId));
 
-  std::string jsonString = SM_Json::create("masjidId", &MASJID_TEST_ID);
+  std::string jsonString = SM_Json::create("masjidId", masjidId);
   Serial.println(jsonString.c_str());
 
   return request(stopAdhanUrl.c_str(), jsonString.c_str());
@@ -88,7 +98,11 @@ HttpStatusCode SmHttp::resetAdhan()
   std::string resetAdhanUrl = smHost;
   resetAdhanUrl += adhanResetEndpoint;
 
-  std::string jsonString = SM_Json::create("masjidId", &MASJID_TEST_ID);
+  char masjidId[32];
+  Sm_Nvs::get(DEVICE_FACTORY_INFO_NAMESPACE,
+    std::make_pair("masjidId", masjidId));
+
+  std::string jsonString = SM_Json::create("masjidId", masjidId);
   Serial.println(jsonString.c_str());
 
   return request(resetAdhanUrl.c_str(), jsonString.c_str(), Http::RequestType::PATCH);
