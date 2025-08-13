@@ -14,7 +14,7 @@
 #define TIMER_NO 0
 #define TIMER_PRESCALAR_1MHZ 80
 #define TIMER_ONE_SECOND_COUNTS 1000000
-#define TELEMETRY_UPDATE_TIME 1 * 60 // telemetry update time in seconds
+#define TELEMETRY_UPDATE_TIME 5 * 60 // telemetry update time in seconds
 
 // ESP Sleep Mode Parameters 
 #define SLEEP_DURATION  5    // 5 minutes
