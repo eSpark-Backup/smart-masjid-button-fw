@@ -2,6 +2,7 @@
 #include "FunctionalInterrupt.h"
 #include "Button.hpp"
 #include "SM_Http.hpp"
+#include "LED.hpp"
 
 volatile int Button::counter = 0;
 bool Button::resetFlag = false;
@@ -89,13 +90,16 @@ void Button::loop()
         Button::adhanStartTime = millis();
         Serial.print("ADHAN_START");
         state = ADHAN_STARTED;
+        rgb.currentMode = MODE::ADHAN_STREAMING;
         Button::counter++;
         break;
 
       case ADHAN_STARTED:
+      
         if ((millis() - Button::adhanStartTime) > ADHAN_MAX_DURATION)
         {
           state = ADHAN_STOP_REQUESTED;
+          rgb.currentMode = MODE::ADHAN_RESET_MODE;
         }
         break;
 
@@ -103,6 +107,7 @@ void Button::loop()
         smHttp.stopAdhan();
         state = ADHAN_STOPPED;
         Serial.print("ADHAN_STOP");
+        rgb.currentMode = MODE::ADHAN_CALLED;
         Button::counter = 0;
         break;
 

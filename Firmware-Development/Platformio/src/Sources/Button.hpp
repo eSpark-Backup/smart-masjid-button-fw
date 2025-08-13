@@ -32,3 +32,5 @@ class Button
     void loop();
 
 };
+
+extern Button button;

@@ -62,6 +62,48 @@ void LED::showBlinkingColor(CRGB color, uint16_t fadeDelay) {
     }
 }
 
+bool LED::blinkColorNTimes(CRGB color, uint16_t interval, uint8_t times) {
+    static uint32_t previousMillis = 0;
+    static int brightness = 0;
+    static bool increasing = true;
+    static uint8_t fadeCount = 0;
+
+    if (fadeCount >= times) {
+        // Reset everything after done
+        brightness = 0;
+        increasing = true;
+        fadeCount = 0;
+
+        fill_solid(leds, NUM_LEDS, CRGB::Black);  // Turn LEDs off
+        FastLED.show();
+
+        return true; 
+    }
+
+    if (millis() - previousMillis >= interval) {
+        previousMillis = millis();
+
+        FastLED.setBrightness(brightness);
+        fill_solid(leds, NUM_LEDS, color);
+        FastLED.show();
+
+        if (increasing) {
+            brightness++;
+            if (brightness >= BRIGHTNESS) {
+                increasing = false;
+            }
+        } else {
+            brightness--;
+            if (brightness <= 0) {
+                increasing = true;
+                fadeCount++;  // one full fade cycle done
+            }
+        }
+    }
+
+    return false;  // still blinking
+}
+
 void LED::circleBlinking(CRGB color, const char *speed)
 {
     uint8_t brightness = 255;
@@ -126,15 +168,39 @@ void rgbLedTask(void *pvParameters)
         switch (LED::currentMode)
         {
             case MODE::BLE:
-                rgb.circleBlinking(rgb.goldenRod, "MEDIUM"); // LED behavior is Orange circle blinking at medium speed
+                rgb.showBlinkingColor(rgb.goldenRod, 200); // LED behavior is Orange circle blinking at medium speed
                 break;
 
-            case MODE::WIFI_CONNECTED:
-                rgb.showSolidColor(rgb.darkgreen); // the board gets connected to WiFi but is sitting idle
+            case MODE::ON_POWER_UP:
+                rgb.showSolidColor(rgb.white); // LED behavior should be Green circle blinking slowly
                 break;
 
             case MODE::ADHAN_STREAMING:
                 rgb.circleBlinking(rgb.green, "SLOW"); // LED behavior should be Green circle blinking slowly
+                break;
+                
+            case MODE::ADHAN_CALLED:
+                rgb.showSolidColor(rgb.green); // LED behavior should be green
+                break;
+
+            case MODE::ADHAN_RESET_MODE:
+                rgb.showSolidColor(rgb.white); // LED behavior should be white
+                break;
+                
+            case MODE::WIFI_CONNECTED:
+                rgb.showSolidColor(rgb.darkgreen); // the board gets connected to WiFi but is sitting idle
+                break;
+
+            case MODE::ADHAN_STARTED_INTERNET_STOPPED:
+                if(rgb.blinkColorNTimes(rgb.darkred, 200, 3)) // LED should blink dark red 3 times
+                {
+                    rgb.currentMode = MODE::ADHAN_STREAMING;
+                }
+                break;
+
+
+            case MODE::OTA_IN_PROGRESS:
+                rgb.showBlinkingColor(rgb.white, 200); // LED behavior should be white
                 break;
 
             case MODE::BATTRY_IS_CHARGING:
@@ -143,9 +209,6 @@ void rgbLedTask(void *pvParameters)
 
             case MODE::LOW_BATTERY:
                 rgb.showSolidColor(rgb.red); // LED behavior is Red constant only when there is no USB charger plugged in
-                break;
-            case MODE::ON_POWER_UP:
-                rgb.showBlinkingColor(rgb.white, FADE_DURATION); // LED behavior should be Green circle blinking slowly
                 break;
 
             case MODE::WIFI_DISCONNECTED:

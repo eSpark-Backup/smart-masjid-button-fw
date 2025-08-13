@@ -13,13 +13,17 @@
 typedef enum MODE 
 { 
   BLE, //1
-  WIFI_CONNECTED,
-  WIFI_DISCONNECTED,
-  ADHAN_STREAMING, //2
-  BATTRY_IS_CHARGING,//3
-  LOW_BATTERY,//4
-  RGB_OFF,//5
-  ON_POWER_UP//6
+  WIFI_CONNECTED, //2
+  WIFI_DISCONNECTED, //3
+  ADHAN_STREAMING, //4
+  BATTRY_IS_CHARGING,//5
+  LOW_BATTERY,//6
+  RGB_OFF,//7
+  ON_POWER_UP,//8
+  ADHAN_CALLED, //9
+  ADHAN_RESET_MODE, //10
+  ADHAN_STARTED_INTERNET_STOPPED, //11
+  OTA_IN_PROGRESS //12
 } MODE;
 
 typedef enum AdhanStatus 
@@ -57,8 +61,11 @@ class LED
     void setup();
     void showSolidColor(CRGB color);
     void showBlinkingColor(CRGB color, uint16_t fadeDelay);
+    bool blinkColorNTimes(CRGB color, uint16_t interval, uint8_t times);
     void setColor(CRGB color);
     void circleBlinking(CRGB color, const char* speed); // speed can be FAST , MEDIUM and SLOW ,any Argument other than these arguments , the led will not lit
     void turnOffLeds();
     void createTask();
 };
+
+extern LED rgb;
