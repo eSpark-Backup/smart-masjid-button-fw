@@ -3,6 +3,7 @@
 #include <WiFiClientSecure.h>
 #include "Mqtt.hpp"
 
+
 // #define EXTERNAL_API_KEY "b8z6X5fzbjNDGHz15XtPVzEkO3h5mCT7q4Ei8AupX9DD12PxL94rhnZHarHc8O2H"
 #define TO_MS(seconds) (seconds * 1000)
 

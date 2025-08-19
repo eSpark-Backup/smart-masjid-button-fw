@@ -15,6 +15,8 @@ char externalApiKey[70];
 char device[70];
 char smFirmware[6];
 
+Json_Urls json_urls;
+
 void loadConfigFromFile() {
   const char* json = certificateHandler.get(FILE_JSON);
   SM_Json::parse(json, std::make_pair("http", http));

@@ -68,7 +68,7 @@ class ProvCharacteristicsCallbacks : public BLECharacteristicCallbacks
       }
       else
       {
-        Serial.println("Unable to parse masjis id");
+        Serial.println("Unable to parse masjid id");
       }  
       
       char ssid[32];

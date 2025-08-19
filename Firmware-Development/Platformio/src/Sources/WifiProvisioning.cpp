@@ -19,7 +19,7 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   
   while (WiFi.status() != WL_CONNECTED && retries-- > 0)
   {
-    delay(1000);
+    delay(500);
     Serial.print(".");
   }
 

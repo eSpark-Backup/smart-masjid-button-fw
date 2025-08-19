@@ -3,6 +3,10 @@
 #include"CertificateHandler.hpp"
 #include "Device.hpp"
 #include "HttpsOTAUpdate.cpp"
+#include "SM_Json.hpp"
+#include <Update.h>
+#include "SPIFFS.h"
+
 
 AWS_OTA* AWS_OTA::instance = nullptr;
 
@@ -94,6 +98,47 @@ void AWS_OTA::startFirmwareUpdate(const char* url)
   
 }
 
+
+void AWS_OTA::startSpiffsUpdate(const char* url) {
+  Serial.print("Starting SPIFFS OTA from: ");
+  Serial.println(url);
+
+  WiFiClientSecure client;
+  client.setInsecure(); // or client.setCACert(server_certificate.c_str())
+
+  HTTPClient https;
+  if (https.begin(client, url)) {
+    int httpCode = https.GET();
+    if (httpCode == HTTP_CODE_OK) {
+      int len = https.getSize();
+      WiFiClient *stream = https.getStreamPtr();
+
+      if (Update.begin(len, U_SPIFFS)) {
+        size_t written = Update.writeStream(*stream);
+        if (written == len) {
+          Serial.println("SPIFFS OTA complete.");
+        } else {
+          Serial.printf("SPIFFS OTA incomplete: written %d / %d\n", written, len);
+        }
+
+        if (Update.end() && Update.isFinished()) {
+          Serial.println("SPIFFS OTA finished successfully.");
+        } else {
+          Serial.printf("SPIFFS OTA error: %u\n", Update.getError());
+        }
+      } else {
+        Serial.println("Not enough space for SPIFFS OTA.");
+      }
+    } else {
+      Serial.printf("SPIFFS OTA failed, HTTP code: %d\n", httpCode);
+    }
+    https.end();
+  } else {
+    Serial.println("SPIFFS OTA: unable to connect to server.");
+  }
+}
+
+
 void awsOtaTask(void* pvParameters) 
 {
   AWS_OTA& ota = *AWS_OTA::getInstance();
@@ -101,6 +146,7 @@ void awsOtaTask(void* pvParameters)
   SmHttp http;
   char otaStatus[10];  
 
+  // Firmware
   while (true) 
   {
     Serial.printf("Device::otaUpdating %d\n", Device::otaUpdating);
@@ -126,6 +172,15 @@ void awsOtaTask(void* pvParameters)
       break;
     delay(1000);
   }
+
+  // SPIFFS OTA if URL was present
+  if (strcmp(otaStatus, OTA_SUCCESS) == 0 && strlen(ota.deviceOtaUrl) > 0) {
+    // json_urls = SM_Json::parseDynamic((const char*)pvParameters);
+    if (json_urls.spiffs.length()) {
+      ota.startSpiffsUpdate(json_urls.spiffs.c_str());
+    }
+  }
+
   http.updateDeviceStatus(Device::macAddress, otaStatus);
 
   if (strcmp(otaStatus, OTA_SUCCESS) == 0) 
