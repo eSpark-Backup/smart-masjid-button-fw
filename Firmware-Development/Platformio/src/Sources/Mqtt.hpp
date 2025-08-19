@@ -32,6 +32,7 @@ typedef enum {
   DEVICE_WIFI,
   DEVICE_PING,
   DEVICE_OTA_UPDATE,
+  DEVICE_DEBUG,
   UNKNOWN_TOPIC = 0xFF,
 } MqttTopic;
 
@@ -58,6 +59,7 @@ private:
   const char* mqttTopicWifi = "wifi";
   const char* mqttTopicPing  = "ping";
   const char* mqttTopicOta  = "update";
+  const char* mqttTopicdebug  = "debug";
 
 
 public:

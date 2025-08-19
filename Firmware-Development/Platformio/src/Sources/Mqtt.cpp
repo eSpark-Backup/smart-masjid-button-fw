@@ -6,6 +6,7 @@
 #include "SM_Nvs.hpp"
 #include "SM_Http.hpp"
 #include"AWS_OTA.hpp"
+#include "OtelLogger.hpp"
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -146,6 +147,27 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
       break;
     }
 
+    case DEVICE_DEBUG:
+    {
+      /* need to implement */
+      Serial.println("DEBUG TOPIC");
+
+      // Expect payload "ON" or "OFF"
+      char state[8] = {0};
+      strncpy(state, (char*)payload, min(length, sizeof(state) - 1));
+
+      if (strcasecmp(state, "ON") == 0) {
+          OtelLogger::enable(true);
+          OtelLogger::log("INFO", "Debug logging enabled", Device::macAddress);
+      } else if (strcasecmp(state, "OFF") == 0) {
+          OtelLogger::log("INFO", "Debug logging disabled", Device::macAddress);
+          OtelLogger::enable(false);
+      } else {
+          Serial.println("Invalid debug payload");
+      }
+      break;
+    }
+
     default:
       Serial.println("UNKNOWN TOPIC");
       break;
@@ -199,6 +221,9 @@ MqttTopic MQTTClient::getTopic(const char* topic)
   else if (compareTopic(topic, mqttTopicOta)) 
   {
     return DEVICE_OTA_UPDATE;
+  }
+  else if (compareTopic(topic, mqttTopicdebug)){
+    return DEVICE_DEBUG;
   }
   return UNKNOWN_TOPIC;
 }
