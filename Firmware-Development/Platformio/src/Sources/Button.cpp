@@ -165,14 +165,28 @@ void Button::loop()
     else if (ADHAN_FLAG)
     {
       state = (buttonState)Button::counter;
+
       switch (state)
       {
       case ADHAN_START_REQUESTED:
-        smHttp.startAdhan();
-        Button::adhanStartTime = millis();
-        Serial.print("\nADHAN_START");
-        rgb.currentMode = MODE::ADHAN_STREAMING;
-        Button::counter = 1;
+        // smHttp.startAdhan();
+        static HttpStatusCode status = smHttp.startAdhan();
+          if (status == Http::Response::OK || status == Http::Response::CREATED) 
+        {
+          Serial.println("ADHAN STARTED");
+          state = ADHAN_STARTED;
+          Button::counter = 1;
+          rgb.currentMode = MODE::ADHAN_STREAMING;
+          Serial.print("\nADHAN_START");
+          Button::adhanStartTime = millis();
+        } 
+        else 
+        {
+          Serial.print("ADHAN NOT STARTED");
+          state = ADHAN_STOPPED;
+          Button::counter = 0;
+        }
+        // Button::counter = 1;
         ADHAN_FLAG = false;
         break;
       case ADHAN_STARTED:
