@@ -118,7 +118,7 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
       char pass[35];
       SM_Json::parse((const char*)payload, std::make_pair("ssid", ssid), std::make_pair("password", pass));
       Device::updateWifiCredential(ssid, pass);
-      if (pWifiProv->connectWifi(ssid, pass, 10)) 
+      if (pWifiProv->connectWifi(ssid, pass, 40)) 
       {
         setup();
       } 

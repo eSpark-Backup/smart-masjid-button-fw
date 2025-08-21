@@ -2,6 +2,8 @@
 // # BT_ENABLE
 // add new file hug_app in board for partition
 // real gpio of this button is 26 while define 16
+#include "esp_system.h"
+#include "esp_sleep.h"
 #include "Sources/BLE.hpp"
 #include "Sources/Button.hpp"
 #include "Sources/WifiProvisioning.hpp"
@@ -30,7 +32,11 @@ void setup()
   Device::checkMacAddress();
   Serial.printf("Arduino Stack was set to %d bytes\n", getArduinoLoopTaskStackSize());
   BLE::setup(&wifiProv);
-  
+
+  esp_sleep_enable_timer_wakeup(1000000 * 60 * 20); // Sleep for 20 minutes
+  // esp_sleep_enable_timer_wakeup(1000000 * 20); // Sleep for 20 seconds for testing purpose
+  // deep sleep is in connectWifi() function
+
   if(wifiProv.connectWifiFromNVS())
   {
     while(!wifiProv.isTelemetrySent())
@@ -60,7 +66,7 @@ void setup()
   }
 
   
-  certificateHandler.print();
+  // certificateHandler.print();
 
   mqtt.createTask(); 
   button.setup();

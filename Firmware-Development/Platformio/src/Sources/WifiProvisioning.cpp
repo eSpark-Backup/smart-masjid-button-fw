@@ -13,13 +13,14 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
     return false;
   }
 
-  Serial.printf("Connecting to %s...\n", ssid);
-  WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+  Serial.printf("Connecting to %s with password: %s...\n", ssid, pass);
+  WiFi.disconnect(true, true);
   WiFi.begin(ssid, pass);
+  WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   
   while (WiFi.status() != WL_CONNECTED && retries-- > 0)
   {
-    delay(1000);
+    delay(500);
     Serial.print(".");
   }
 
@@ -33,6 +34,9 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   {
     WiFi.disconnect();
     Serial.println("Failed to connect to WiFi");
+    
+    Serial.println("Going to sleep for 20 seconds");
+    esp_deep_sleep_start();
   }
 
   return false;

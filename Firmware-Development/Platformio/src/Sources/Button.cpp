@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include "FunctionalInterrupt.h"
 #include "Button.hpp"
+#include "BLE.hpp"
 #include "SM_Http.hpp"
 
 volatile int Button::counter = 0;
@@ -49,12 +50,26 @@ void Button::loop()
     }
     else if ((xTaskGetTickCount() - resetButtonPressStartTime) >= pdMS_TO_TICKS(5000))
     {
-      Serial.println("Reset button pressed for 5 seconds. Restarting...");
+      Serial.println("Reset button pressed for 5 seconds. Switching to BLE Mode...");
       delay(1000); // Small delay to avoid accidental reset
       // esp_restart(); // Restart the ESP32
       Device::deleteMasjidId();
       Device::deleteWificredentials();
-      ESP.restart();
+      
+      // New Feature added for Turn ON BLE Mode after pressing Reset Button for 5 seconds
+      // Turn off wifi
+      WiFi.mode(WIFI_OFF);
+      delay(100);
+      
+      // switch to Bluetooth mode
+      Serial.println("Switching to Bluetooth mode");
+      BLE::initialize();
+      while(WiFi.status() != WL_CONNECTED) 
+      {
+        delay(100);
+      }
+      BLE::stop();
+      // ESP.restart();
     }
   }
   else

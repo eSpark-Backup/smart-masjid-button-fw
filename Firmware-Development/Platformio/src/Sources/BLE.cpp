@@ -75,7 +75,7 @@ class ProvCharacteristicsCallbacks : public BLECharacteristicCallbacks
       char pass[32];
       if (SM_Json::parse(rxValue.c_str(), std::make_pair("ssid", ssid), std::make_pair("pass", pass))) 
       {
-        if (pWifiProv->connectWifi(ssid, pass))
+        if (pWifiProv->connectWifi(ssid, pass, 40))
         {    
           // Store credentials in NVS
           if (Sm_Nvs::put(DEVICE_WIFI_CREDENTIALS_NAMESPACE,
