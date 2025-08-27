@@ -33,16 +33,14 @@ void setup()
   Serial.printf("Arduino Stack was set to %d bytes\n", getArduinoLoopTaskStackSize());
   BLE::setup(&wifiProv);
 
-  esp_sleep_enable_timer_wakeup(1000000 * 60 * 20); // Sleep for 20 minutes
-  // esp_sleep_enable_timer_wakeup(1000000 * 20); // Sleep for 20 seconds for testing purpose
   // deep sleep is in connectWifi() function
 
   if(wifiProv.connectWifiFromNVS())
   {
-    while(!wifiProv.isTelemetrySent())
-    {
-      delay(100);
-    }
+    // while(!wifiProv.isTelemetrySent())
+    // {
+    //   delay(100);
+    // }
   } 
   else
   {
@@ -60,22 +58,22 @@ void setup()
     BLE::stop();
   }
   
-  while(!wifiProv.isTelemetrySent())
-  {
-    delay(100);
-  }
+  // while(!wifiProv.isTelemetrySent())
+  // {
+  //   delay(100);
+  // }
 
   
   // certificateHandler.print();
 
-  mqtt.createTask(); 
+  // mqtt.createTask(); 
   button.setup();
-  Device::timerSetup();
+  // Device::timerSetup();
 }
 
 void loop() 
 { 
-  wifiMonitor.MonitorWifi();
+  // wifiMonitor.MonitorWifi();
   button.loop();
   Device::loop();
   Device::memoryMonitoring();
