@@ -15,6 +15,7 @@ SmHttp smHttp;
 volatile uint32_t lastInterruptTime = 0;  // Track last interrupt time for debounce
 const uint32_t debounceDelay = 200;  // Debounce delay in milliseconds
 volatile bool waitingForRelease = false;
+int32_t expiration_time = 0, stop_requested_time = 0;
 void Button::setup()
 {
   pinMode(pin, INPUT_PULLUP);
@@ -85,34 +86,44 @@ void Button::loop()
     state = (buttonState)Button::counter;
     switch (state)
     {
-      case ADHAN_START_REQUESTED:
-        smHttp.startAdhan();
-        Button::adhanStartTime = millis();
-        Serial.print("ADHAN_START");
-        state = ADHAN_STARTED;
-        rgb.currentMode = MODE::ADHAN_STREAMING;
-        Button::counter++;
-        break;
+    case ADHAN_START_REQUESTED:
+      smHttp.startAdhan();
+      Button::adhanStartTime = millis();
+      Serial.print("ADHAN_START\n");
+      state = ADHAN_STARTED;
+      rgb.currentMode = MODE::ADHAN_STREAMING;
+      Button::counter++;
+      break;
 
-      case ADHAN_STARTED:
+    case ADHAN_STARTED:
       
-        if ((millis() - Button::adhanStartTime) > ADHAN_MAX_DURATION)
-        {
-          state = ADHAN_STOP_REQUESTED;
-          rgb.currentMode = MODE::ADHAN_RESET_MODE;
-        }
-        break;
+      if ((millis() - Button::adhanStartTime) > ADHAN_MAX_DURATION)
+      {
+        state = ADHAN_STOP_REQUESTED;
+        // rgb.currentMode = MODE::ADHAN_RESET_MODE;
+      }
+      break;
 
-      case ADHAN_STOP_REQUESTED:
-        smHttp.stopAdhan();
-        state = ADHAN_STOPPED;
-        Serial.print("ADHAN_STOP");
+    case ADHAN_STOP_REQUESTED:
+      
+      if(stop_requested_time == 0){
+        expiration_time = 1800; // For testing purposes only
+        smHttp.stopAdhan(&expiration_time);
+        stop_requested_time = millis();
         rgb.currentMode = MODE::ADHAN_CALLED;
+        Serial.print("ADHAN_STOP_REQUESTED\n");
+      }
+      if(millis()- stop_requested_time >= expiration_time){
+        state = ADHAN_STOPPED;
+        Serial.print("ADHAN_STOP\n");
+        rgb.currentMode = MODE::ADHAN_RESET_MODE;
         Button::counter = 0;
-        break;
+        stop_requested_time = 0;
+      }
+      break;
 
-      default:
-        break;
+    default:
+      break;
     }
   }
 

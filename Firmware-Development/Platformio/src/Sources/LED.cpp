@@ -169,54 +169,66 @@ void rgbLedTask(void *pvParameters)
         {
             case MODE::BLE:
                 rgb.showBlinkingColor(rgb.goldenRod, 200); // LED behavior is Orange circle blinking at medium speed
+                // Serial.println("LED Orange circle blinking\n");
                 break;
 
             case MODE::ON_POWER_UP:
-                rgb.showSolidColor(rgb.white); // LED behavior should be Green circle blinking slowly
+                rgb.showSolidColor(rgb.white); // LED behavior should be solid white
+                Serial.println("LED solid white blinking\n");
                 break;
 
             case MODE::ADHAN_STREAMING:
                 rgb.circleBlinking(rgb.green, "SLOW"); // LED behavior should be Green circle blinking slowly
+                Serial.println("LED Green circle blinking slowly\n");
                 break;
                 
             case MODE::ADHAN_CALLED:
                 rgb.showSolidColor(rgb.green); // LED behavior should be green
+                Serial.println("LED green\n");
                 break;
 
             case MODE::ADHAN_RESET_MODE:
                 rgb.showSolidColor(rgb.white); // LED behavior should be white
+                Serial.println("LED white\n");
                 break;
                 
             case MODE::WIFI_CONNECTED:
                 rgb.showSolidColor(rgb.darkgreen); // the board gets connected to WiFi but is sitting idle
+                Serial.println("LED darkgreen\n");
                 break;
 
             case MODE::ADHAN_STARTED_INTERNET_STOPPED:
                 if(rgb.blinkColorNTimes(rgb.darkred, 200, 3)) // LED should blink dark red 3 times
                 {
                     rgb.currentMode = MODE::ADHAN_STREAMING;
+                    Serial.println("LED blink dark red 3 times\n");
                 }
                 break;
 
-
+  
             case MODE::OTA_IN_PROGRESS:
-                rgb.showBlinkingColor(rgb.white, 200); // LED behavior should be white
+                rgb.showBlinkingColor(rgb.white, 200); // LED behavior should be white blinking
+                Serial.println("LED white blinking\n");
                 break;
 
             case MODE::BATTRY_IS_CHARGING:
                 rgb.showSolidColor(rgb.green); // It should show Green light constantly if USB power is plugged in
+                Serial.println("LED green\n");
                 break;
 
             case MODE::LOW_BATTERY:
                 rgb.showSolidColor(rgb.red); // LED behavior is Red constant only when there is no USB charger plugged in
+                Serial.println("LED red\n");
                 break;
 
             case MODE::WIFI_DISCONNECTED:
                 rgb.showSolidColor(rgb.darkred); // LED behavior should be red 
+                Serial.println("LED darkred\n");
                 break;
 
             default:
                 rgb.turnOffLeds();
+                Serial.println("LEDs OFF\n");
                 break;
         }
     }

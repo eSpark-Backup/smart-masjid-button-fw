@@ -44,9 +44,9 @@ class SmHttp
     HttpStatusCode startAdhan();  
     HttpStatusCode sendDeviceTelemetry(const char* macAddress, uint8_t retryInterval, uint16_t maxRetryDuration);
     HttpStatusCode sendDeviceTelemetry(const char* macAddress);
-    HttpStatusCode stopAdhan(); 
+    HttpStatusCode stopAdhan(int32_t *expiration_time);
     HttpStatusCode resetAdhan();
     HttpStatusCode notifyOTAUpdate(const char* macAddress);
     HttpStatusCode updateDeviceStatus(const char* macAddress, char* status);
-    HttpStatusCode request(const char* url, const char* json, Http::RequestType request = Http::RequestType::POST);
+    HttpStatusCode request(const char* url, const char* json, Http::RequestType request = Http::RequestType::POST, String *payload = nullptr);
 };

@@ -74,7 +74,7 @@ HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress)
   return request(deviceTelemetryUrl.c_str(), telemetryJson);
 }
 
-HttpStatusCode SmHttp::stopAdhan() 
+HttpStatusCode SmHttp::stopAdhan(int32_t *expiration_time) 
 {
   std::string stopAdhanUrl = smHost;
   stopAdhanUrl += adhanStopEndpoint;
@@ -85,8 +85,14 @@ HttpStatusCode SmHttp::stopAdhan()
 
   std::string jsonString = SM_Json::create("masjidId", masjidId);
   Serial.println(jsonString.c_str());
-
-  return request(stopAdhanUrl.c_str(), jsonString.c_str());
+  String payload;
+  StaticJsonDocument<128> doc;
+  deserializeJson(doc, payload);
+  if(doc.containsKey("adhanCalledExpiration")){
+    *expiration_time = doc["adhanCalledExpiration"];
+  }
+  HttpStatusCode status = request(stopAdhanUrl.c_str(), jsonString.c_str(), Http::RequestType::POST, &payload);
+  return status;
 }
 
 HttpStatusCode SmHttp::resetAdhan() 
@@ -140,7 +146,7 @@ HttpStatusCode SmHttp::updateDeviceStatus(const char* macAddress, char* status)
   return request(updateOnLoadUrl.c_str(), payload, Http::RequestType::PUT);
 }
 
-HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestType request) 
+HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestType request, String *payload) 
 {
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -162,6 +168,7 @@ HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestT
   {
     case Http::RequestType::POST:
        status = https.POST(json);
+       *payload = https.getString();
        break;
     case Http::RequestType::PATCH:
        status = https.PATCH(json);
