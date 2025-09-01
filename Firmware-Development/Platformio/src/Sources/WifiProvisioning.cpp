@@ -63,7 +63,8 @@ void WifiProvisioning::wifiGotIP(WiFiEvent_t event, WiFiEventInfo_t info)
  Serial.println(WiFi.localIP());
 
  SmHttp smHttp;
- int httpscode = smHttp.sendDeviceTelemetry(Device::macAddress, DEVICE_TELEMETRY_RETRY_INTERVAL, DEVICE_TELEMETRY_MAX_RETRIES );
+ int httpscode;
+//  httpscode = smHttp.sendDeviceTelemetry(Device::macAddress, DEVICE_TELEMETRY_RETRY_INTERVAL, DEVICE_TELEMETRY_MAX_RETRIES );
 
  switch(httpscode)
  {
@@ -79,7 +80,7 @@ void WifiProvisioning::wifiGotIP(WiFiEvent_t event, WiFiEventInfo_t info)
      break;
 
    default:
-     BLE::initialize();
+    //  BLE::initialize();
      break;
  }
 }

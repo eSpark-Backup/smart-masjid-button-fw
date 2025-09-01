@@ -41,10 +41,10 @@ void setup()
   
   if(wifiProv.connectWifiFromNVS())
   {
-    while(!wifiProv.isTelemetrySent())
-    {
-      delay(100);
-    }
+    // while(!wifiProv.isTelemetrySent())
+    // {
+    //   delay(100);
+    // }
   } 
   else
   {
@@ -62,10 +62,10 @@ void setup()
     BLE::stop();
   }
   
-  while(!wifiProv.isTelemetrySent())
-  {
-    delay(100);
-  }
+  // while(!wifiProv.isTelemetrySent())
+  // {
+  //   delay(100);
+  // }
 
   
   certificateHandler.print();

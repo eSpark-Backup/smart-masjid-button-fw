@@ -81,17 +81,29 @@ HttpStatusCode SmHttp::stopAdhan(int32_t *expiration_time)
   
   char masjidId[32];
   Sm_Nvs::get(DEVICE_FACTORY_INFO_NAMESPACE,
-    std::make_pair("masjidId", masjidId));
+  std::make_pair("masjidId", masjidId));
 
   std::string jsonString = SM_Json::create("masjidId", masjidId);
   Serial.println(jsonString.c_str());
-  String payload;
-  StaticJsonDocument<128> doc;
-  deserializeJson(doc, payload);
-  if(doc.containsKey("adhanCalledExpiration")){
-    *expiration_time = doc["adhanCalledExpiration"];
-  }
+  
+  String payload = "{}";
+
   HttpStatusCode status = request(stopAdhanUrl.c_str(), jsonString.c_str(), Http::RequestType::POST, &payload);
+  if (payload.length() > 0) {
+    StaticJsonDocument<256> doc;
+    DeserializationError err = deserializeJson(doc, payload);
+
+    if (!err && doc.containsKey("adhanCalledExpiration")) {
+      *expiration_time = doc["adhanCalledExpiration"];
+      Serial.print("adhanCalledExpiration: ");
+      Serial.println(*expiration_time);
+    } else {
+      Serial.println("Failed to parse JSON or missing key.");
+    }
+  } else {
+    Serial.println("Empty response received.");
+  }
+
   return status;
 }
 
@@ -146,7 +158,7 @@ HttpStatusCode SmHttp::updateDeviceStatus(const char* macAddress, char* status)
   return request(updateOnLoadUrl.c_str(), payload, Http::RequestType::PUT);
 }
 
-HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestType request, String *payload) 
+HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestType request, String* responseOut) 
 {
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -162,13 +174,13 @@ HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestT
   https.addHeader("Content-Type", "application/json");
   https.addHeader("x-api-key", externalApiKey);
   HttpStatusCode status = Http::Response::UNKNOWN;;
-  Serial.print("\nWIFI RSSI : ");
-  Serial.println(WiFi.RSSI());
+  // Serial.print("\nWIFI RSSI : ");
+  // Serial.println(WiFi.RSSI());
   switch(request)
   {
     case Http::RequestType::POST:
        status = https.POST(json);
-       *payload = https.getString();
+      //  *payload = https.getString();
        break;
     case Http::RequestType::PATCH:
        status = https.PATCH(json);
@@ -178,9 +190,14 @@ HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestT
         break;  
   }
   
-  const char* response = https.getString().c_str();
+  if (responseOut != nullptr) {
+    *responseOut = https.getString();
+    Serial.println(*responseOut);
+  }
   https.end();
-
+  // const char* response = https.getString().c_str();
+  
+  
   if (status == Http::Response::OK || status == Http::Response::CREATED) 
   {
     Serial.println("Request successful!");
@@ -190,7 +207,6 @@ HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestT
     Serial.print("Request failed with error code: ");
     Serial.println(status);
   }
-
-  Serial.println(response);
+  
   return status;
 }

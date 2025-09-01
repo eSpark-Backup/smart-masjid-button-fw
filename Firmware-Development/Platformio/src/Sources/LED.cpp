@@ -174,34 +174,34 @@ void rgbLedTask(void *pvParameters)
 
             case MODE::ON_POWER_UP:
                 rgb.showSolidColor(rgb.white); // LED behavior should be solid white
-                Serial.println("LED solid white blinking\n");
+                // Serial.println("LED solid white blinking\n");
                 break;
 
             case MODE::ADHAN_STREAMING:
                 rgb.circleBlinking(rgb.green, "SLOW"); // LED behavior should be Green circle blinking slowly
-                Serial.println("LED Green circle blinking slowly\n");
+                // Serial.println("LED Green circle blinking slowly\n");
                 break;
                 
             case MODE::ADHAN_CALLED:
                 rgb.showSolidColor(rgb.green); // LED behavior should be green
-                Serial.println("LED green\n");
+                // Serial.println("LED green\n");
                 break;
 
             case MODE::ADHAN_RESET_MODE:
                 rgb.showSolidColor(rgb.white); // LED behavior should be white
-                Serial.println("LED white\n");
+                // Serial.println("LED white\n");
                 break;
                 
             case MODE::WIFI_CONNECTED:
                 rgb.showSolidColor(rgb.darkgreen); // the board gets connected to WiFi but is sitting idle
-                Serial.println("LED darkgreen\n");
+                // Serial.println("LED darkgreen\n");
                 break;
 
             case MODE::ADHAN_STARTED_INTERNET_STOPPED:
                 if(rgb.blinkColorNTimes(rgb.darkred, 200, 3)) // LED should blink dark red 3 times
                 {
                     rgb.currentMode = MODE::ADHAN_STREAMING;
-                    Serial.println("LED blink dark red 3 times\n");
+                    // Serial.println("LED blink dark red 3 times\n");
                 }
                 break;
 

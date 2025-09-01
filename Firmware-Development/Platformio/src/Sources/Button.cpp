@@ -11,6 +11,7 @@ uint32_t Button::adhanStartTime = 0;
 TickType_t buttonPressStartTime = 0;
 TickType_t resetButtonPressStartTime = 0;
 SmHttp smHttp;
+MODE rgb_last_mode;
 
 volatile uint32_t lastInterruptTime = 0;  // Track last interrupt time for debounce
 const uint32_t debounceDelay = 200;  // Debounce delay in milliseconds
@@ -90,6 +91,7 @@ void Button::loop()
       smHttp.startAdhan();
       Button::adhanStartTime = millis();
       Serial.print("ADHAN_START\n");
+      rgb_last_mode = rgb.currentMode;
       state = ADHAN_STARTED;
       rgb.currentMode = MODE::ADHAN_STREAMING;
       Button::counter++;
@@ -107,7 +109,7 @@ void Button::loop()
     case ADHAN_STOP_REQUESTED:
       
       if(stop_requested_time == 0){
-        expiration_time = 1800; // For testing purposes only
+        // expiration_time = 1800; // For testing purposes only
         smHttp.stopAdhan(&expiration_time);
         stop_requested_time = millis();
         rgb.currentMode = MODE::ADHAN_CALLED;
@@ -116,7 +118,7 @@ void Button::loop()
       if(millis()- stop_requested_time >= expiration_time){
         state = ADHAN_STOPPED;
         Serial.print("ADHAN_STOP\n");
-        rgb.currentMode = MODE::ADHAN_RESET_MODE;
+        rgb.currentMode = rgb_last_mode;
         Button::counter = 0;
         stop_requested_time = 0;
       }

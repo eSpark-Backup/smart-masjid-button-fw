@@ -48,5 +48,5 @@ class SmHttp
     HttpStatusCode resetAdhan();
     HttpStatusCode notifyOTAUpdate(const char* macAddress);
     HttpStatusCode updateDeviceStatus(const char* macAddress, char* status);
-    HttpStatusCode request(const char* url, const char* json, Http::RequestType request = Http::RequestType::POST, String *payload = nullptr);
+    HttpStatusCode request(const char* url, const char* json, Http::RequestType request = Http::RequestType::POST, String* responseOut = nullptr);
 };
