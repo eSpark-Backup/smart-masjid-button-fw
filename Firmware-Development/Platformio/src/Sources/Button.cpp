@@ -50,19 +50,24 @@ void check_reset_button(){
       {
         Serial.println("Reset button pressed for 5 seconds. Switching to BLE Mode...");
         delay(1000); // Small delay to avoid accidental reset
-        Device::deleteMasjidId();
+        // Device::deleteMasjidId();
         Device::deleteWificredentials();
 
         // New Feature added for Turn ON BLE Mode after pressing Reset Button for 5 seconds
+        WiFi.disconnect();
         WiFi.mode(WIFI_OFF);
+        delay(500);
 
         // switch to Bluetooth mode
         Serial.println("Switching to Bluetooth mode");
-        BLE::initialize();
+        if(!BLE::isStarted()){
+          Serial.println("BLE is complete OFF");
+          BLE::start();
+        }
         Serial.println("BLE initialized");
         while (WiFi.status() != WL_CONNECTED)
         {
-          // Serial.print(".");
+          Serial.print(".");
           delay(100);
         }
         BLE::stop();

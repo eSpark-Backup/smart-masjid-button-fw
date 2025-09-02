@@ -23,5 +23,6 @@ class BLE
     static void setup(IWifiProvisioning* wifiProv);
     static bool initialize();
     static void stop(void);
+    static void start(void);
     static bool isStarted(void);
 };

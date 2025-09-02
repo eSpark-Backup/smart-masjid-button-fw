@@ -41,8 +41,8 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
     Serial.println("Failed to connect to WiFi");
     if (values_found) // from nvs
     {
-      esp_sleep_enable_timer_wakeup(1000000 * 6); // Sleep 6 seconds
-      // esp_sleep_enable_timer_wakeup(1000000 * 60 * 20); // Sleep for 20 minutes
+      // esp_sleep_enable_timer_wakeup(1000000 * 6); // Sleep 6 seconds
+      esp_sleep_enable_timer_wakeup(1000000 * 60 * 20); // Sleep for 20 minutes
       Serial.println("Going to sleep for 20 minutes");
       esp_deep_sleep_start();
     }

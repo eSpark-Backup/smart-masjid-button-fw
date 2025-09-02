@@ -18,6 +18,7 @@ BLECharacteristic *pTxCharacteristic;
 BLECharacteristic *pDeviceCharacteristic;
 BLECharacteristic *pProvCharacteristic;
 
+
 static volatile bool g_bleStopping = false;
 
 class MyServerCallbacks : public BLEServerCallbacks
@@ -50,7 +51,7 @@ class MyServerCallbacks : public BLEServerCallbacks
   {
     if (g_bleStopping) return;
     Serial.println("BLE : device disconnected");
-    pServer->startAdvertising(); // restart advertising
+
   }
 };
 
@@ -113,11 +114,11 @@ bool BLE::initialize()
   // Create the BLE Server
   pServer = BLEDevice::createServer();
   Serial.println("BLE Server created");
-  pServer->setCallbacks(new MyServerCallbacks());
-  Serial.println("BLE Server callbacks set");
-  // Create the BLE Service
   pService = pServer->createService(SERVICE_UUID);
   Serial.println("BLE Service created");
+  // Create the BLE Service
+  pServer->setCallbacks(new MyServerCallbacks());
+  Serial.println("BLE Server callbacks set");
   // Setting macAdress on BLE Advertisement
   BLEAdvertisementData adv;
   BLEAdvertising *pAdvertising = pServer->getAdvertising();
@@ -157,55 +158,91 @@ bool BLE::initialize()
   return true;
 }
 
-void BLE::stop(void)
-{
-  Serial.println("BLE: Starting shutdown sequence...");
-  g_bleStopping = true;
-  if (pServer)
-  {
-    if (pServer->getAdvertising())
-    {
+// ---- BLE Restart (Light Restart) ----
+void BLE::start(void) {
+  Serial.println("BLE: Restarting advertising...");
+
+  if (pServer && pServer->getAdvertising()) {
+    pServer->getAdvertising()->start();
+    Serial.println("BLE: Advertising started again");
+    status = BLE_STARTED;
+  } else {
+    Serial.println("BLE: ERROR - Server/Advertising not available!");
+  }
+}
+
+// void BLE::stop(void)
+// {
+//   Serial.println("BLE: Starting shutdown sequence...");
+//   g_bleStopping = true;
+//   if (pServer)
+//   {
+//     if (pServer->getAdvertising())
+//     {
+//       pServer->getAdvertising()->stop();
+//     }
+//     Serial.println("BLE: Advertising stopped.");
+//     if (pServer->getConnectedCount() > 0)
+//     {
+//       pServer->disconnect(pServer->getConnId());
+//     }
+//     pServer->disconnect(pServer->getConnId());
+//   }
+//   Serial.println("BLE: Disconnected all clients.");
+//   if (pProvCharacteristic)
+//   {
+//     pProvCharacteristic->setCallbacks(nullptr);
+//   }
+//   Serial.println("BLE: Provisioning characteristic callbacks cleared.");
+//   if (pService)
+//   {
+//     pService->stop();
+//      delete pService;
+//     pService = nullptr;
+//   }
+//   Serial.println("BLE: Service stopped and deleted.");
+//      delete pServer;
+//   pServer = nullptr;
+//   Serial.println("BLE: Server deleted.");
+
+//   Serial.println("BLE: BT controller disabled and deinitialized.");
+//   BLEDevice::deinit(true); 
+//   Serial.println("BLE: BLE Device deinitialized.");
+//   delay(200);
+
+//   pTxCharacteristic = nullptr;
+//   pDeviceCharacteristic = nullptr;
+//   pProvCharacteristic = nullptr;
+
+//   LED &rgb = *LED::getInstance();
+//   rgb.currentMode = MODE::WIFI_CONNECTED;
+//   WifiProvisioning::wifiServiceStarted = true;
+//   status = BLE_STOPPED;
+
+//   g_bleStopping = false;
+//   Serial.println("BLE: Shutdown complete.");
+// }
+// ---- BLE Stop (Light Stop) ----
+void BLE::stop(void) {
+  Serial.println("BLE: Light stop (stop advertising + disconnect clients)");
+
+  if (pServer) {
+    // Stop advertising
+    if (pServer->getAdvertising()) {
       pServer->getAdvertising()->stop();
+      Serial.println("BLE: Advertising stopped");
     }
-    Serial.println("BLE: Advertising stopped.");
-    if (pServer->getConnectedCount() > 0)
-    {
-      pServer->disconnect(pServer->getConnId());
-    }
-  }
-  Serial.println("BLE: Disconnected all clients.");
-  if (pProvCharacteristic)
-  {
-    pProvCharacteristic->setCallbacks(nullptr);
-  }
-  Serial.println("BLE: Provisioning characteristic callbacks cleared.");
-  if (pService)
-  {
-    pService->stop();
-    delete pService;
-    pService = nullptr;
-  }
-  Serial.println("BLE: Service stopped and deleted.");
-  delete pServer;
-  pServer = nullptr;
-  Serial.println("BLE: Server deleted.");
 
-  Serial.println("BLE: BT controller disabled and deinitialized.");
-  BLEDevice::deinit(true); // full stack deinit
-  Serial.println("BLE: BLE Device deinitialized.");
-  delay(200);
+    // Disconnect all clients
+    
+      pServer->disconnect(0);
+      Serial.println("BLE: Clients disconnected");
+    
+  }
 
-  pTxCharacteristic = nullptr;
-  pDeviceCharacteristic = nullptr;
-  pProvCharacteristic = nullptr;
-
-  LED &rgb = *LED::getInstance();
-  rgb.currentMode = MODE::WIFI_CONNECTED;
-  WifiProvisioning::wifiServiceStarted = true;
+  // Do NOT delete service or server
+  // Just leave them initialized for later reuse
   status = BLE_STOPPED;
-
-  g_bleStopping = false;
-  Serial.println("BLE: Shutdown complete.");
 }
 
 bool BLE::isStarted(void)

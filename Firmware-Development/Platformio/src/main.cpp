@@ -14,13 +14,17 @@
 #include "Sources/WifiMonitoring.hpp"
 
 
+
+
 SET_LOOP_TASK_STACK_SIZE( 16*1024 ); // 16KB
 
 WifiProvisioning wifiProv;
 Button button(SMBTN_GPIO);
 MQTTClient mqtt(&wifiProv);
 WifiMonitoring wifiMonitor;
+
 // CertificateHandler certificateHandler;
+
 
 void setup() 
 {
@@ -64,16 +68,16 @@ void setup()
   // }
 
   
-  // certificateHandler.print();
+  certificateHandler.print();
 
-  // mqtt.createTask(); 
+  mqtt.createTask(); 
   button.setup();
-  // Device::timerSetup();
+  Device::timerSetup();
 }
 
 void loop() 
 { 
-  // wifiMonitor.MonitorWifi();
+  wifiMonitor.MonitorWifi();
   button.loop();
   Device::loop();
   Device::memoryMonitoring();
