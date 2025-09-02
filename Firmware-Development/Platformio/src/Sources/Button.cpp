@@ -51,7 +51,7 @@ void check_reset_button(){
         Serial.println("Reset button pressed for 5 seconds. Switching to BLE Mode...");
         delay(1000); // Small delay to avoid accidental reset
         // Device::deleteMasjidId();
-        Device::deleteWificredentials();
+        // Device::deleteWificredentials();
 
         // New Feature added for Turn ON BLE Mode after pressing Reset Button for 5 seconds
         WiFi.disconnect();
