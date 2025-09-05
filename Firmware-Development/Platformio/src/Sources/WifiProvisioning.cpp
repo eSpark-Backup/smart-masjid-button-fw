@@ -20,7 +20,7 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   Serial.printf("Connecting to %s with password: %s...\n", ssid, pass);
   WiFi.disconnect(true, true);
   WiFi.begin(ssid, pass);
-  // WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+   WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
 
   while (WiFi.status() != WL_CONNECTED && retries-- > 0)
   {
@@ -31,7 +31,7 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
 
   if (WiFi.status() == WL_CONNECTED)
   {
-    // WiFi.onEvent(std::bind(&WifiProvisioning::wifiReconnect, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+    WiFi.onEvent(std::bind(&WifiProvisioning::wifiReconnect, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     wifiServiceStarted = true;
     return true;
   }

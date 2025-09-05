@@ -18,6 +18,8 @@ void Device::setup()
 {
   if(checkMacAddress())
   {
+    Device::getDeviceMacAddress(Device::macAddress);
+    storeMacAddress();
    Serial.println(Device::macAddress);
   }
   else

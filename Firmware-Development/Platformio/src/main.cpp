@@ -14,8 +14,6 @@
 #include "Sources/WifiMonitoring.hpp"
 
 
-
-
 SET_LOOP_TASK_STACK_SIZE( 16*1024 ); // 16KB
 
 WifiProvisioning wifiProv;
@@ -33,18 +31,18 @@ void setup()
   rgb.createTask();
   rgb.currentMode = MODE::ON_POWER_UP; 
   certificateHandler.setup();
-  Device::checkMacAddress();
   Serial.printf("Arduino Stack was set to %d bytes\n", getArduinoLoopTaskStackSize());
+  Device::checkMacAddress();
   BLE::setup(&wifiProv);
 
   // deep sleep is in connectWifi() function
 
   if(wifiProv.connectWifiFromNVS())
   {
-    // while(!wifiProv.isTelemetrySent())
-    // {
-    //   delay(100);
-    // }
+    while(!wifiProv.isTelemetrySent())
+    {
+      delay(100);
+    }
   } 
   else
   {
@@ -62,10 +60,10 @@ void setup()
     BLE::stop();
   }
   
-  // while(!wifiProv.isTelemetrySent())
-  // {
-  //   delay(100);
-  // }
+  while(!wifiProv.isTelemetrySent())
+  {
+    delay(100);
+  }
 
   
   certificateHandler.print();
