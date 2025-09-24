@@ -58,11 +58,15 @@ void OtelLogger::sendToOtel(const char* payload) {
     client.setInsecure(); // skip cert validation
     loadOTELConfigfromfile();
     String url = otelhost;
-    http.begin(client, url);
+    if(!http.begin(client, url)){
+        Serial.println("[OTEL] Failed to begin HTTP connection");
+        return;  
+    };
     http.setAuthorization(otelUsername, otelPassword);
     http.addHeader("Content-Type", "application/json");
 
     int httpCode = http.POST((uint8_t*)payload, strlen(payload));
+    
     if (httpCode > 0) {
         Serial.printf("[OTEL] Response: %d\n", httpCode);
     } else {
