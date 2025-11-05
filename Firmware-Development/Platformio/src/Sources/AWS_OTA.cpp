@@ -3,6 +3,8 @@
 #include"CertificateHandler.hpp"
 #include "Device.hpp"
 #include "HttpsOTAUpdate.cpp"
+#include "LED.hpp"
+#include "Button.hpp"
 
 AWS_OTA* AWS_OTA::instance = nullptr;
 
@@ -38,6 +40,7 @@ void AWS_OTA::setup()
   Serial.println("Starting OTA");
   HttpsOTA.begin(deviceOtaUrl, server_certificate);
   Serial.println("Please Wait it takes some time ...");
+  rgb.currentMode = MODE::OTA_IN_PROGRESS;
 }
 
 bool AWS_OTA::getStatus()
@@ -55,6 +58,9 @@ bool AWS_OTA::getStatus()
     case HTTPS_OTA_FAIL:
       Serial.println("Firmware Upgrade Fail");
       updated = false;
+      if (rgb.currentMode == MODE::ADHAN_STREAMING) {
+        rgb.currentMode = MODE::ADHAN_STARTED_INTERNET_STOPPED;
+      }
       return false;
 
     case HTTPS_OTA_UPDATING:

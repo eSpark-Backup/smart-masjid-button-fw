@@ -25,6 +25,8 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
 
   if (WiFi.status() == WL_CONNECTED)
   {
+    LED& rgb = *LED::getInstance();
+    rgb.currentMode = MODE::WIFI_CONNECTED;
     WiFi.onEvent(std::bind(&WifiProvisioning::wifiReconnect, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     wifiServiceStarted = true;
     return true;
@@ -63,25 +65,25 @@ void WifiProvisioning::wifiGotIP(WiFiEvent_t event, WiFiEventInfo_t info)
  Serial.println(WiFi.localIP());
 
  SmHttp smHttp;
- int httpscode = smHttp.sendDeviceTelemetry(Device::macAddress, DEVICE_TELEMETRY_RETRY_INTERVAL, DEVICE_TELEMETRY_MAX_RETRIES );
+//  int httpscode = smHttp.sendDeviceTelemetry(Device::macAddress, DEVICE_TELEMETRY_RETRY_INTERVAL, DEVICE_TELEMETRY_MAX_RETRIES );
 
- switch(httpscode)
- {
-   case Http::Response::OK:
-   case Http::Response::CREATED:
-     deviceTelemetryStatus = TELEMETRY_SENT;
-     break;
+//  switch(httpscode)
+//  {
+//    case Http::Response::OK:
+//    case Http::Response::CREATED:
+//      deviceTelemetryStatus = TELEMETRY_SENT;
+//      break;
 
-   case Http::Response::DEVICE_NOT_FOUND:
-     Serial.println("Device Reset");
-     Device::deleteWificredentials();
-     ESP.restart();
-     break;
+//    case Http::Response::DEVICE_NOT_FOUND:
+//      Serial.println("Device Reset");
+//      Device::deleteWificredentials();
+//      ESP.restart();
+//      break;
 
-   default:
-     BLE::initialize();
-     break;
- }
+//    default:
+//     //  BLE::initialize();
+//      break;
+//  }
 }
 
 // telemetryStatus deviceTelemetryStatus;

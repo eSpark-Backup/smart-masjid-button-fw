@@ -1,15 +1,20 @@
+
+// #include "LED.hpp"
 #pragma once
 
 #define SMBTN_GPIO 26
 #define RESET_GPIO 32
 
+// extern MODE rgb_last_mode;
+
 enum buttonState
 {
-  UNPRESSED ,
+  UNPRESSED = 0,
   ADHAN_START_REQUESTED,
   ADHAN_STARTED,
   ADHAN_STOP_REQUESTED,
   ADHAN_STOPPED,
+  ADHAN__CALLED,
   ADHAN_RESET = 10
 };
 
@@ -32,3 +37,5 @@ class Button
     void loop();
 
 };
+
+extern Button button;

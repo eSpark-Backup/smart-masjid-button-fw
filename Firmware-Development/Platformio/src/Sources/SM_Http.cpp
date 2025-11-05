@@ -35,6 +35,8 @@ HttpStatusCode SmHttp::startAdhan()
     std::make_pair("masjidId", masjidId));
 
   std::string jsonString = SM_Json::create("masjidId", masjidId);
+  Serial.println("\n\n*-----------------------------------\n\n");
+  Serial.println("\nStarting Adhan with payload: ");
   Serial.println(jsonString.c_str());
 
   return request(startAdhanUrl.c_str(), jsonString.c_str());
@@ -74,20 +76,54 @@ HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress)
   return request(deviceTelemetryUrl.c_str(), telemetryJson);
 }
 
-HttpStatusCode SmHttp::stopAdhan() 
+// HttpStatusCode SmHttp::stopAdhan() 
+// {
+//   std::string stopAdhanUrl = smHost;
+//   stopAdhanUrl += adhanStopEndpoint;
+  
+//   char masjidId[32];
+//   Sm_Nvs::get(DEVICE_FACTORY_INFO_NAMESPACE,
+//     std::make_pair("masjidId", masjidId));
+
+//   std::string jsonString = SM_Json::create("masjidId", masjidId);
+//   Serial.println(jsonString.c_str());
+
+//   return request(stopAdhanUrl.c_str(), jsonString.c_str());
+// }
+
+HttpStatusCode SmHttp::stopAdhan(int32_t *expiration_time) 
 {
   std::string stopAdhanUrl = smHost;
   stopAdhanUrl += adhanStopEndpoint;
   
   char masjidId[32];
   Sm_Nvs::get(DEVICE_FACTORY_INFO_NAMESPACE,
-    std::make_pair("masjidId", masjidId));
+  std::make_pair("masjidId", masjidId));
 
   std::string jsonString = SM_Json::create("masjidId", masjidId);
   Serial.println(jsonString.c_str());
+  
+  String payload = "{}";
 
-  return request(stopAdhanUrl.c_str(), jsonString.c_str());
+  HttpStatusCode status = request(stopAdhanUrl.c_str(), jsonString.c_str(), Http::RequestType::POST, &payload);
+  if (payload.length() > 0) {
+    StaticJsonDocument<256> doc;
+    DeserializationError err = deserializeJson(doc, payload);
+
+    if (!err && doc.containsKey("adhanCalledExpiration")) {
+      *expiration_time = doc["adhanCalledExpiration"];
+      Serial.print("adhanCalledExpiration: ");
+      Serial.println(*expiration_time);
+    } else {
+      Serial.println("Failed to parse JSON or missing key.");
+    }
+  } else {
+    Serial.println("Empty response received.");
+  }
+
+  return status;
 }
+
 
 HttpStatusCode SmHttp::resetAdhan() 
 {
@@ -142,6 +178,7 @@ HttpStatusCode SmHttp::updateDeviceStatus(const char* macAddress, char* status)
 
 HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestType request) 
 {
+  Serial.println("Request 1 called");
   if (WiFi.status() != WL_CONNECTED)
   {
     Serial.println("Wifi not connected : Unable to send request");
@@ -177,6 +214,7 @@ HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestT
   if (status == Http::Response::OK || status == Http::Response::CREATED) 
   {
     Serial.println("Request successful!");
+    
   } 
   else 
   {
@@ -185,5 +223,61 @@ HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestT
   }
 
   Serial.println(response);
+  return status;
+}
+
+
+
+HttpStatusCode SmHttp::request(const char* url, const char* json, Http::RequestType request, String* responseOut) 
+{
+  Serial.println("Request 2 called");
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.println("Wifi not connected : Unable to send request");
+    return false;
+  }
+
+  WiFiClientSecure client;
+  client.setInsecure();
+  HTTPClient https;
+  https.setReuse(false);
+  https.begin(client, url);
+  https.addHeader("Content-Type", "application/json");
+  https.addHeader("x-api-key", externalApiKey);
+  HttpStatusCode status = Http::Response::UNKNOWN;;
+  Serial.print("\nWIFI RSSI : ");
+  Serial.println(WiFi.RSSI());
+  switch(request)
+  {
+    case Http::RequestType::POST:
+       status = https.POST(json);
+      //  *payload = https.getString();
+       break;
+    case Http::RequestType::PATCH:
+       status = https.PATCH(json);
+       break;
+    case Http::RequestType::PUT: 
+        status = https.PUT(json);
+        break;  
+  }
+  
+  if (responseOut != nullptr) {
+    *responseOut = https.getString();
+    Serial.println(*responseOut);
+  }
+  https.end();
+  // const char* response = https.getString().c_str();
+  
+  
+  if (status == Http::Response::OK || status == Http::Response::CREATED) 
+  {
+    Serial.println("Request successful!");
+  } 
+  else 
+  {
+    Serial.print("Request failed with error code: ");
+    Serial.println(status);
+  }
+  
   return status;
 }
