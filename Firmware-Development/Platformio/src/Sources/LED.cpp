@@ -1,6 +1,8 @@
 #include "LED.hpp"
 #include <cstring>
 
+MODE rgb_last_mode = RGB_OFF;
+
 LED rgb;
 CRGBPalette16 LED::currentPalette;
 MODE LED::currentMode = MODE::RGB_OFF;
@@ -53,15 +55,46 @@ void LED::showBlinkingColor(CRGB color, uint16_t fadeDelay) {
 
         // Adjust brightness direction
         if (increasing) {
-            brightness++;
+            brightness = brightness + 15;
             if (brightness >= BRIGHTNESS) increasing = false;
         } else {
-            brightness--;
+            brightness = brightness - 15;
             if (brightness <= 0) increasing = true;
         }
     }
 }
 
+// void LED::showBlinkingColor(CRGB color, uint16_t interval) {
+//     // Turn LEDs ON with the given color
+//         fill_solid(leds, NUM_LEDS, color);
+//         FastLED.show();
+//         delay(interval);
+
+//         // Turn LEDs OFF
+//         fill_solid(leds, NUM_LEDS, CRGB::Black);
+//         FastLED.show();
+//         delay(interval);
+// }
+
+// bool LED::blinkColorNTimes(CRGB color, uint16_t interval, uint8_t times)
+// {
+//     if (times == 0) return false;  // no blinks requested
+
+//     for (uint8_t i = 0; i < times; i++)
+//     {
+//         // Turn LEDs ON with the given color
+//         fill_solid(leds, NUM_LEDS, color);
+//         FastLED.show();
+//         delay(interval);
+
+//         // Turn LEDs OFF
+//         fill_solid(leds, NUM_LEDS, CRGB::Black);
+//         FastLED.show();
+//         delay(interval);
+//     }
+
+//     return true; // successfully blinked
+// }
 bool LED::blinkColorNTimes(CRGB color, uint16_t interval, uint8_t times) {
     static uint32_t previousMillis = 0;
     static int brightness = 0;
@@ -88,12 +121,12 @@ bool LED::blinkColorNTimes(CRGB color, uint16_t interval, uint8_t times) {
         FastLED.show();
 
         if (increasing) {
-            brightness++;
+            brightness = brightness + 10;
             if (brightness >= BRIGHTNESS) {
                 increasing = false;
             }
         } else {
-            brightness--;
+            brightness = brightness - 10;
             if (brightness <= 0) {
                 increasing = true;
                 fadeCount++;  // one full fade cycle done
@@ -104,38 +137,138 @@ bool LED::blinkColorNTimes(CRGB color, uint16_t interval, uint8_t times) {
     return false;  // still blinking
 }
 
+// void LED::circleBlinking(CRGB color, const char *speed)
+// {
+//     uint8_t brightness = 255;
+//     uint8_t colorIndex = 1;
+//     CRGB black = CRGB::Black;
+//     CRGBPalette16 currentPalette_Black = black;
+//     // currentPalette = CRGBPalette16(color, color, CRGB::Black,  CRGB::Black);
+//     setColor(color);
+
+//     for (int i = 0; i < NUM_LEDS; ++i)
+//     {
+//         // Turn off all LEDs
+//         fill_solid(leds, NUM_LEDS, CRGB::Black);
+//         // Turn on the current LED
+//         leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
+//         FastLED.show();
+
+//         // if (speed == "FAST")
+//         if (strcmp(speed, "FAST") == 0)
+//             FastLED.delay(10000 * 3 / UPDATES_PER_SECOND);
+//         // else if (speed == "MEDIUM")
+//         else if (strcmp(speed, "MEDIUM") == 0)
+//             FastLED.delay(100000 / UPDATES_PER_SECOND);
+//         // else if (speed == "SLOW")
+//         else if (strcmp(speed, "SLOW") == 0)
+//             FastLED.delay(100000 * 5 / UPDATES_PER_SECOND);
+//         else
+//         {
+//             setColor(black);
+//         }
+//     }
+// }
+
+// void LED::circleBlinking(CRGB color, const char *speed)
+// {
+//     uint8_t brightness = 255;
+//     uint8_t colorIndex = 1;
+//     CRGB black = CRGB::Black;
+//     CRGBPalette16 currentPalette_Black = black;
+//     setColor(color);
+
+//     uint16_t delayTime;
+
+//     // Determine delay time based on speed
+//     if (strcmp(speed, "FAST") == 0)
+//         delayTime = 10000 * 3 / UPDATES_PER_SECOND;
+//     else if (strcmp(speed, "MEDIUM") == 0)
+//         delayTime = 100000 / UPDATES_PER_SECOND;
+//     else if (strcmp(speed, "SLOW") == 0)
+//         delayTime = 100000 * 5 / UPDATES_PER_SECOND;
+//     else
+//         delayTime = 50000 / UPDATES_PER_SECOND;
+
+//     for (int i = 0; i < NUM_LEDS; ++i)
+//     {
+//         // Turn off all LEDs
+//         fill_solid(leds, NUM_LEDS, CRGB::Black);
+
+//         // Fade in
+//         for (int b = 0; b <= 255; b += 10)
+//         {
+//             leds[i] = ColorFromPalette(currentPalette, colorIndex, b, currentBlending);
+//             FastLED.show();
+//             FastLED.delay(delayTime / 10);
+//         }
+
+//         // Hold at full brightness
+//         FastLED.delay(delayTime);
+
+//         // Fade out
+//         for (int b = 255; b >= 0; b -= 10)
+//         {
+//             leds[i] = ColorFromPalette(currentPalette, colorIndex, b, currentBlending);
+//             FastLED.show();
+//             FastLED.delay(delayTime / 10);
+//         }
+//     }
+// }
+
 void LED::circleBlinking(CRGB color, const char *speed)
 {
     uint8_t brightness = 255;
     uint8_t colorIndex = 1;
     CRGB black = CRGB::Black;
     CRGBPalette16 currentPalette_Black = black;
-    // currentPalette = CRGBPalette16(color, color, CRGB::Black,  CRGB::Black);
     setColor(color);
 
+    uint16_t delayTime;
+    uint8_t fade_step = 5;
+
+    // Determine delay time based on speed
+    if (strcmp(speed, "FAST") == 0)
+    {
+        fade_step = 15;
+        delayTime = 1;   // shorter delay for faster motion
+    }
+    else if (strcmp(speed, "MEDIUM") == 0)
+    {
+        fade_step = 5;
+        delayTime = 10;
+    }
+    else if (strcmp(speed, "SLOW") == 0)
+    {
+        fade_step = 1;
+        delayTime = 20;
+    }
+    else
+        delayTime = 15;
+
+    // main circular fade loop
     for (int i = 0; i < NUM_LEDS; ++i)
     {
-        // Turn off all LEDs
-        fill_solid(leds, NUM_LEDS, CRGB::Black);
-        // Turn on the current LED
-        leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
-        FastLED.show();
+        int next = (i + 1) % NUM_LEDS;  // next LED index (wrap around at end)
 
-        // if (speed == "FAST")
-        if (strcmp(speed, "FAST") == 0)
-            FastLED.delay(10000 * 3 / UPDATES_PER_SECOND);
-        // else if (speed == "MEDIUM")
-        else if (strcmp(speed, "MEDIUM") == 0)
-            FastLED.delay(100000 / UPDATES_PER_SECOND);
-        // else if (speed == "SLOW")
-        else if (strcmp(speed, "SLOW") == 0)
-            FastLED.delay(100000 * 5 / UPDATES_PER_SECOND);
-        else
+        // fade transition between i and next
+        for (int b = 0; b <= 255; b += fade_step)
         {
-            setColor(black);
+            // calculate complementary brightness for the two LEDs
+            uint8_t fadeOut = 255 - b;
+            uint8_t fadeIn = b;
+
+            // set brightness levels
+            fill_solid(leds, NUM_LEDS, CRGB::Black);
+            leds[i]   = ColorFromPalette(currentPalette, colorIndex, fadeOut, currentBlending);
+            leds[next] = ColorFromPalette(currentPalette, colorIndex, fadeIn, currentBlending);
+
+            FastLED.show();
+            FastLED.delay(delayTime);
         }
     }
 }
+
 
 void LED::turnOffLeds()
 {
@@ -168,15 +301,15 @@ void rgbLedTask(void *pvParameters)
         switch (LED::currentMode)
         {
             case MODE::BLE:
-                rgb.showBlinkingColor(rgb.goldenRod, 200); // LED behavior is Orange circle blinking at medium speed
+                rgb.showBlinkingColor(rgb.goldenRod, 50); // LED behavior is Orange circle blinking at medium speed
                 break;
 
             case MODE::ON_POWER_UP:
-                rgb.showSolidColor(rgb.white); // LED behavior should be Green circle blinking slowly
+                rgb.showSolidColor(rgb.white); // LED behavior should be white
                 break;
 
             case MODE::ADHAN_STREAMING:
-                rgb.circleBlinking(rgb.green, "SLOW"); // LED behavior should be Green circle blinking slowly
+                rgb.circleBlinking(rgb.green, "MEDIUM"); // LED behavior should be Green circle blinking at medium speed
                 break;
                 
             case MODE::ADHAN_CALLED:
@@ -192,15 +325,21 @@ void rgbLedTask(void *pvParameters)
                 break;
 
             case MODE::ADHAN_STARTED_INTERNET_STOPPED:
-                if(rgb.blinkColorNTimes(rgb.darkred, 200, 3)) // LED should blink dark red 3 times
+                if(rgb.blinkColorNTimes(rgb.darkred, 100, 3)) // LED should blink dark red 3 times
                 {
                     rgb.currentMode = MODE::ADHAN_STREAMING;
                 }
                 break;
-
+            case MODE::ADHAN_NOT_STARTED:
+                if(rgb.blinkColorNTimes(rgb.darkred, 50, 3)) // LED should fade blink dark red 3 times
+                // if(rgb.blinkColorNTimes(rgb.darkred, 250, 3)) // LED should blink dark red 3 times
+                {
+                    rgb.currentMode = rgb_last_mode;
+                }
+                break;
 
             case MODE::OTA_IN_PROGRESS:
-                rgb.showBlinkingColor(rgb.white, 200); // LED behavior should be white
+                rgb.showBlinkingColor(rgb.white, 100); // LED behavior should be white
                 break;
 
             case MODE::BATTRY_IS_CHARGING:

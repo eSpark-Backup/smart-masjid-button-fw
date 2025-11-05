@@ -155,8 +155,8 @@ void BLE::stop(void)
   // Delete BLE server
   BLEDevice::deinit(true);
   Serial.println("BLE Stopped"); 
-  LED& rgb = *LED::getInstance();
-  rgb.currentMode = MODE::WIFI_CONNECTED; 
+  // LED& rgb = *LED::getInstance();
+  // rgb.currentMode = MODE::WIFI_CONNECTED; 
   WifiProvisioning::wifiServiceStarted = true;
   status = BLE_STOPPED;
 }

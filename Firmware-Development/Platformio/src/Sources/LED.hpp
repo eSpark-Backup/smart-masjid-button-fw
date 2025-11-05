@@ -23,8 +23,12 @@ typedef enum MODE
   ADHAN_CALLED, //9
   ADHAN_RESET_MODE, //10
   ADHAN_STARTED_INTERNET_STOPPED, //11
-  OTA_IN_PROGRESS //12
+  OTA_IN_PROGRESS, //12
+  ADHAN_NOT_STARTED //13
 } MODE;
+
+
+extern MODE rgb_last_mode;
 
 typedef enum AdhanStatus 
 { 
