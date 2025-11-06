@@ -195,7 +195,9 @@ void Button::loop()
           Serial.print("ADHAN NOT STARTED\n");
           state = UNPRESSED;
           Button::counter = 0;
-          rgb_last_mode = rgb.currentMode;
+          if(rgb.currentMode != MODE::ADHAN_NOT_STARTED){
+            rgb_last_mode = rgb.currentMode;
+          }
           rgb.currentMode = MODE::ADHAN_NOT_STARTED;
         }
         // Button::counter = 1;
