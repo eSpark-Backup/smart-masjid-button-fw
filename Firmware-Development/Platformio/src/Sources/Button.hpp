@@ -6,6 +6,9 @@
 #define RESET_GPIO 32
 
 // extern MODE rgb_last_mode;
+extern bool BLE_mode;
+
+void check_reset_button();
 
 enum buttonState
 {
@@ -35,7 +38,7 @@ class Button
     Button(uint8_t pin) : pin(pin) {}
     void setup(); 
     void loop();
-
-};
-
+    
+  };
+  
 extern Button button;

@@ -1,7 +1,9 @@
 
 // # BT_ENABLE
 // add new file hug_app in board for partition
-// real gpio of this button is 26 while define 16
+// real gpio of this button is 26 while define 16 //// removed this
+#include "esp_system.h"
+#include "esp_sleep.h"
 #include "Sources/BLE.hpp"
 #include "Sources/Button.hpp"
 #include "Sources/WifiProvisioning.hpp"
@@ -29,6 +31,7 @@ void setup()
   certificateHandler.setup();
   Device::checkMacAddress();
   Serial.printf("Arduino Stack was set to %d bytes\n", getArduinoLoopTaskStackSize());
+  button.setup();
   BLE::setup(&wifiProv);
   
   if(wifiProv.connectWifiFromNVS())
@@ -47,11 +50,13 @@ void setup()
     // switch to Bluetooth mode
     Serial.println("Switching to Bluetooth mode");
     BLE::initialize();
+    BLE_mode = true;
     while(WiFi.status() != WL_CONNECTED) 
     {
       delay(100);
     }
     BLE::stop();
+    BLE_mode = false;
   }
   
   // while(!wifiProv.isTelemetrySent())
@@ -63,7 +68,6 @@ void setup()
   certificateHandler.print();
 
   mqtt.createTask(); 
-  button.setup();
   Device::timerSetup();
 }
 

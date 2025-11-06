@@ -3,8 +3,14 @@
 #include "BLE.hpp"
 #include "SM_Http.hpp"
 #include "SM_Nvs.hpp"
+#include "Button.hpp"
 #include <WiFi.h>
+bool ret = false;
+bool values_found = false;
+WiFiEventId_t wifi_gotIP_event;
+WiFiEventId_t wifi_reconnect_event;
 
+static TickType_t resetButtonPressStartTime = 0;
 volatile bool WifiProvisioning::wifiServiceStarted = false;
 bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retries)
 { 
@@ -14,20 +20,21 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   }
 
   Serial.printf("Connecting to %s...\n", ssid);
-  WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.begin(ssid, pass);
   
   while (WiFi.status() != WL_CONNECTED && retries-- > 0)
   {
     delay(1000);
     Serial.print(".");
+    check_reset_button();
   }
-
+  
   if (WiFi.status() == WL_CONNECTED)
   {
+    wifi_gotIP_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
     LED& rgb = *LED::getInstance();
     rgb.currentMode = MODE::WIFI_CONNECTED;
-    WiFi.onEvent(std::bind(&WifiProvisioning::wifiReconnect, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+    wifi_reconnect_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiReconnect, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     wifiServiceStarted = true;
     return true;
   }
@@ -35,6 +42,13 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   {
     WiFi.disconnect();
     Serial.println("Failed to connect to WiFi");
+    if (values_found) // from nvs
+    {
+      // esp_sleep_enable_timer_wakeup(1000000 * 6); // Sleep 6 seconds
+      Serial.println("Going to sleep for 20 minutes");
+      esp_sleep_enable_timer_wakeup(1000000 * 60 * 20); // Sleep for 20 minutes
+      esp_deep_sleep_start();
+    }
   }
 
   return false;
@@ -49,10 +63,20 @@ bool WifiProvisioning::connectWifiFromNVS(void)
                         std::make_pair("ssid", ssid),
                         std::make_pair("pass", pass));   
                                               
+  // if (!ret)
+  // {
+  //   Serial.println("No values saved for ssid or password");
+  //   return false;
+  // }
+
   if (!ret)
   {
     Serial.println("No values saved for ssid or password");
+    values_found = false;
     return false;
+  }
+  else{
+    values_found = true;
   }
   
   return connectWifi(ssid, pass);
@@ -163,5 +187,9 @@ void WifiProvisioning::wifiReconnect(WiFiEvent_t event, WiFiEventInfo_t info)
   Serial.print("WiFi lost connection. Reason: ");
   Serial.println(info.wifi_sta_disconnected.reason);
   Serial.println("Trying to Reconnect");
-  WiFi.reconnect();
+  if(WiFi.reconnect()){
+    Serial.println("Reconnected to WiFi");
+    LED& rgb = *LED::getInstance();
+    rgb.currentMode = MODE::WIFI_CONNECTED;
+  }
 }

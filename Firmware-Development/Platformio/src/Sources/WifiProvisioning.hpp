@@ -14,6 +14,9 @@
 #define DEVCICE_FOUND 200
 #define TO_MS(seconds) ((seconds) * 1000)
 
+extern WiFiEventId_t wifi_reconnect_event;
+extern WiFiEventId_t wifi_gotIP_event;
+
 typedef enum
 {
   TELEMETRY_NOTSENT,

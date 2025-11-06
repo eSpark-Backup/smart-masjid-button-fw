@@ -6,6 +6,8 @@
 #include "SM_Nvs.hpp"
 #include "SM_Http.hpp"
 #include"AWS_OTA.hpp"
+#include "Button.hpp"
+#include "LED.hpp"
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -154,10 +156,8 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
 
 void MQTTClient::loop() 
 {
-  if (!mqttClient.connected()) 
-      mqttCallback();
-
-  mqttClient.loop();
+    if (!mqttClient.connected()) mqttCallback(); 
+      mqttClient.loop();
 }
 
 bool MQTTClient::subscribe(const char* topic) 
@@ -312,31 +312,33 @@ void MQTTClient::mqttCallback()
 
       int retryCount = 0;
       const int maxRetries = MAX_WIFI_RETRIES;
-      
-      while (WiFi.status() != WL_CONNECTED && retryCount < maxRetries) {
-        Serial.print("WiFi disconnected. Retrying (");
-        Serial.print(retryCount + 1);
-        Serial.println("/10)...");
-        WiFi.disconnect();
-        WifiProvisioning::wifiServiceStarted = false;
-        delay(1000);
-        WiFi.reconnect();
-        delay(2000); 
-        retryCount++;
-    }
-      if (WiFi.status() != WL_CONNECTED){
-        Serial.println("Failed to reconnect after 10 attempts. Entering sleep mode...");
-        Serial.println("Enter Sleep mode for 5 minutes.");
-        delay(10);
-        esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 1 minute in microseconds
-        esp_light_sleep_start();
-      }
-      else {
+
+        while (WiFi.status() != WL_CONNECTED && retryCount < maxRetries) {
+          Serial.print("WiFi disconnected. Retrying (");
+          Serial.print(retryCount + 1);
+          Serial.println("/10)...");
+          WiFi.disconnect();
+          WifiProvisioning::wifiServiceStarted = false;
+          delay(1000);
+          WiFi.reconnect();
+          delay(2000); 
+          retryCount++;
+        }
+        if (WiFi.status() != WL_CONNECTED){
+          Serial.println("Failed to reconnect after 10 attempts. Entering sleep mode...");
+          Serial.println("Enter Sleep mode for 5 minutes.");
+          delay(10);
+          esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 5 minute in microseconds
+          esp_light_sleep_start();
+        }
+        else {
           Serial.println("WiFi Reconnected Successfully!");
           if(connectToBroker(5))
           {
             WifiProvisioning::wifiServiceStarted = true;
             Serial.println("Wifi connection established successfullly");
+            LED& rgb = *LED::getInstance();
+            rgb.currentMode = MODE::WIFI_CONNECTED;
           } 
           else 
           {
@@ -348,8 +350,8 @@ void MQTTClient::mqttCallback()
             esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 1 minute in microseconds
             esp_light_sleep_start();
           }
-      }
-  }
+        }
+}
 
 void MQTTClient::printState()
 {
@@ -410,10 +412,12 @@ void mqttTask(void* pvParameters)
 
   while(1)
   {
-    mqtt->loop();
-    if(mqtt->otaUpdating)
-    {
-      break;
+    if(!BLE_mode){
+      mqtt->loop();
+      if(mqtt->otaUpdating)
+      {
+        break;
+      }
     }
   }
 
