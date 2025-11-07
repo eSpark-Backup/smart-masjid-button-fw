@@ -204,16 +204,20 @@ void Button::loop()
       else if ((xTaskGetTickCount() - buttonPressStartTime) >= pdMS_TO_TICKS(5000))
       {
         Serial.print(".");
-        Serial.println("\nAdhan is Reset\n");
-        smHttp.resetAdhan();
-        rgb.currentMode = MODE::ADHAN_RESET_MODE;
-        Button::resetFlag = true;
-        Button::counter = 0;
-        buttonPressStartTime = 0;
-        button_check_time = 0;
-        ADHAN_FLAG = false;
-        ignore_release = true;
-        stop_requested_time = 0;
+        if(smHttp.resetAdhan() == Http::Response::OK){
+          Serial.println("\nAdhan is Reset\n");
+          rgb.currentMode = MODE::ADHAN_RESET_MODE;
+          Button::resetFlag = true;
+          Button::counter = 0;
+          buttonPressStartTime = 0;
+          button_check_time = 0;
+          ADHAN_FLAG = false;
+          ignore_release = true;
+          stop_requested_time = 0;
+        }
+        else{
+          Serial.println("Adhan Reset Failed");
+        }
       }
     }
   }
