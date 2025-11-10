@@ -9,11 +9,14 @@
 #include "BLE.hpp"
 #include "Mqtt.hpp"
 #include "SM_Nvs.hpp"
+#include "OtelLogger.hpp"
 char http[150];
 char smHost[50];
 char externalApiKey[70];
 char device[70];
 char smFirmware[6];
+
+Json_Urls json_urls;
 
 void loadConfigFromFile() {
   const char* json = certificateHandler.get(FILE_JSON);
@@ -63,17 +66,11 @@ HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress, uint8_t retry
 
 HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress) 
 {
+  
   loadConfigFromFile();
-  std::string deviceTelemetryUrl = smHost;
-  deviceTelemetryUrl += telemetryEndpoint;
 
-  char telemetryJson[64];
-  SM_Json::create(telemetryJson, sizeof(telemetryJson),
-                  std::make_pair("battery", BATTERY_HEALTH),
-                  std::make_pair("macAddress", Device::macAddress));
-  Serial.println(telemetryJson);
-
-  return request(deviceTelemetryUrl.c_str(), telemetryJson);
+  return OtelLogger::log("INFO", Device::macAddress, externalApiKey);
+  
 }
 
 // HttpStatusCode SmHttp::stopAdhan() 
@@ -153,6 +150,7 @@ HttpStatusCode SmHttp::notifyOTAUpdate(const char* macAddress)
   char updateOnLoadUrlJson[64];
   snprintf(updateOnLoadUrlJson, sizeof(updateOnLoadUrlJson), "{\"macAddress\":\"%s\",\"firmwareVersion\":\"%s\"}", Device::macAddress, smFirmware);
   // SM_Json::create(updateOnLoadUrlJson, sizeof(updateOnLoadUrlJson), std::make_pair("macAddress", Device::macAddress), std::make_pair("firmwareVersion", SM_FIRMWARE_VER));
+  Serial.println("Notifying OTA update with payload: ");
   Serial.println(updateOnLoadUrlJson);
   return request(updateOnLoadUrl.c_str(), updateOnLoadUrlJson, Http::RequestType::PUT);
 }
@@ -172,6 +170,7 @@ HttpStatusCode SmHttp::updateDeviceStatus(const char* macAddress, char* status)
   SM_Json::create(payload, sizeof(payload),
                   std::make_pair("macAddress", Device::macAddress),
                   std::make_pair("status", status));
+  Serial.println("Updating device status with payload: ");
   Serial.println(payload);
   return request(updateOnLoadUrl.c_str(), payload, Http::RequestType::PUT);
 }

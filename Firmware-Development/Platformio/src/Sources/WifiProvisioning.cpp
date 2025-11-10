@@ -18,8 +18,9 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   {
     return false;
   }
-
+  
   Serial.printf("Connecting to %s...\n", ssid);
+  wifi_gotIP_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.begin(ssid, pass);
   
   while (WiFi.status() != WL_CONNECTED && retries-- > 0)
@@ -31,7 +32,7 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   
   if (WiFi.status() == WL_CONNECTED)
   {
-    wifi_gotIP_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
+    Serial.println("\n---------------------------------Connected to WiFi---------------------------------\n");
     LED& rgb = *LED::getInstance();
     rgb.currentMode = MODE::WIFI_CONNECTED;
     wifi_reconnect_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiReconnect, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
@@ -84,30 +85,31 @@ bool WifiProvisioning::connectWifiFromNVS(void)
 
 void WifiProvisioning::wifiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) 
 {
- // Print network details
  Serial.print("Connected to Wi-Fi network with IP address: ");
  Serial.println(WiFi.localIP());
-
+ 
+ Serial.println("Sending Device Telemetry");
  SmHttp smHttp;
-//  int httpscode = smHttp.sendDeviceTelemetry(Device::macAddress, DEVICE_TELEMETRY_RETRY_INTERVAL, DEVICE_TELEMETRY_MAX_RETRIES );
+//  ESP32 was crashing
+ int httpscode = smHttp.sendDeviceTelemetry(Device::macAddress, DEVICE_TELEMETRY_RETRY_INTERVAL, DEVICE_TELEMETRY_MAX_RETRIES );
 
-//  switch(httpscode)
-//  {
-//    case Http::Response::OK:
-//    case Http::Response::CREATED:
-//      deviceTelemetryStatus = TELEMETRY_SENT;
-//      break;
+ switch(httpscode)
+ {
+   case Http::Response::OK:
+   case Http::Response::CREATED:
+     deviceTelemetryStatus = TELEMETRY_SENT;
+     break;
 
-//    case Http::Response::DEVICE_NOT_FOUND:
-//      Serial.println("Device Reset");
-//      Device::deleteWificredentials();
-//      ESP.restart();
-//      break;
+   case Http::Response::DEVICE_NOT_FOUND:
+     Serial.println("Device Reset");
+     Device::deleteWificredentials();
+     ESP.restart();
+     break;
 
-//    default:
-//     //  BLE::initialize();
-//      break;
-//  }
+   default:
+    //  BLE::initialize();
+     break;
+ }
 }
 
 // telemetryStatus deviceTelemetryStatus;

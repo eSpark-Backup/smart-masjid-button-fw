@@ -3,6 +3,9 @@
 #include"CertificateHandler.hpp"
 #include "Device.hpp"
 #include "HttpsOTAUpdate.cpp"
+#include "SM_Json.hpp"
+#include <Update.h>
+#include "SPIFFS.h"
 #include "LED.hpp"
 #include "Button.hpp"
 
@@ -40,7 +43,7 @@ void AWS_OTA::setup()
   Serial.println("Starting OTA");
   HttpsOTA.begin(deviceOtaUrl, server_certificate);
   Serial.println("Please Wait it takes some time ...");
-  rgb.currentMode = MODE::OTA_IN_PROGRESS;
+ 
 }
 
 bool AWS_OTA::getStatus()
@@ -48,11 +51,12 @@ bool AWS_OTA::getStatus()
   otastatus = HttpsOTA.status();
   Serial.print("Ota Status = ");
   Serial.println(otastatus);
-
+  
   switch (otastatus)
   {
     case HTTPS_OTA_SUCCESS:
-      Serial.println("Firmware written successfully. To reboot device, call API ESP.restart() or PUSH restart button on device");
+    Serial.println("Firmware written successfully. To reboot device, call API ESP.restart() or PUSH restart button on device");
+    rgb.currentMode = rgb_last_mode;
       return true;
 
     case HTTPS_OTA_FAIL:
@@ -60,6 +64,9 @@ bool AWS_OTA::getStatus()
       updated = false;
       if (rgb.currentMode == MODE::ADHAN_STREAMING) {
         rgb.currentMode = MODE::ADHAN_STARTED_INTERNET_STOPPED;
+      }
+      else{
+        rgb.currentMode = rgb_last_mode;
       }
       return false;
 
@@ -73,16 +80,22 @@ bool AWS_OTA::getStatus()
 
     default:
       Serial.println("Unknown OTA Status");
+      rgb.currentMode = rgb_last_mode;
       break;
   }
-
   return false;
 }
 
 void AWS_OTA::startFirmwareUpdate(const char* url)
 {
   deviceOtaUrl = url;
+  Serial.print("start Firmware Update from URL: ");
   Serial.println(deviceOtaUrl);
+
+   if(rgb.currentMode != rgb_last_mode){
+    rgb_last_mode = rgb.currentMode;
+  }
+  rgb.currentMode = MODE::OTA_IN_PROGRESS;
 
   // CertificateHandler certificateHandler;
   certificateHandler.setup();
@@ -98,6 +111,45 @@ void AWS_OTA::startFirmwareUpdate(const char* url)
     //delete[] server_certificate;  
   }
   
+}
+
+void AWS_OTA::startSpiffsUpdate(const char* url) {
+  Serial.print("Starting SPIFFS OTA from: ");
+  Serial.println(url);
+
+  WiFiClientSecure client;
+  client.setInsecure(); // or client.setCACert(server_certificate.c_str())
+
+  HTTPClient https;
+  if (https.begin(client, url)) {
+    int httpCode = https.GET();
+    if (httpCode == HTTP_CODE_OK) {
+      int len = https.getSize();
+      WiFiClient *stream = https.getStreamPtr();
+
+      if (Update.begin(len, U_SPIFFS)) {
+        size_t written = Update.writeStream(*stream);
+        if (written == len) {
+          Serial.println("SPIFFS OTA complete.");
+        } else {
+          Serial.printf("SPIFFS OTA incomplete: written %d / %d\n", written, len);
+        }
+
+        if (Update.end() && Update.isFinished()) {
+          Serial.println("SPIFFS OTA finished successfully.");
+        } else {
+          Serial.printf("SPIFFS OTA error: %u\n", Update.getError());
+        }
+      } else {
+        Serial.println("Not enough space for SPIFFS OTA.");
+      }
+    } else {
+      Serial.printf("SPIFFS OTA failed, HTTP code: %d\n", httpCode);
+    }
+    https.end();
+  } else {
+    Serial.println("SPIFFS OTA: unable to connect to server.");
+  }
 }
 
 void awsOtaTask(void* pvParameters) 
@@ -132,13 +184,20 @@ void awsOtaTask(void* pvParameters)
       break;
     delay(1000);
   }
+   // SPIFFS OTA if URL was present
+  if (strcmp(otaStatus, OTA_SUCCESS) == 0 && strlen(ota.deviceOtaUrl) > 0) {
+    // json_urls = SM_Json::parseDynamic((const char*)pvParameters);
+    if (json_urls.spiffs.length()) {
+      ota.startSpiffsUpdate(json_urls.spiffs.c_str());
+    }
+  }
   http.updateDeviceStatus(Device::macAddress, otaStatus);
 
   if (strcmp(otaStatus, OTA_SUCCESS) == 0) 
     ESP.restart();
 
   Device::otaUpdating = false;
-  Serial.printf("Device::otaUpdating %d\n", Device::otaUpdating);
+  Serial.printf("Device::otaUpdating flag: %d\n", Device::otaUpdating);
   Serial.println("OTA Task Deleted");
   vTaskDelete(NULL);
 }

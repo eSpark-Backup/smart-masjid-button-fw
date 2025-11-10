@@ -12,6 +12,7 @@
 #include "Sources/SM_Nvs.hpp"
 #include  "Sources/CertificateHandler.hpp"
 #include "Sources/WifiMonitoring.hpp"
+#include "Sources/OTELLogger.hpp"
 
 
 SET_LOOP_TASK_STACK_SIZE( 16*1024 ); // 16KB
@@ -36,10 +37,11 @@ void setup()
   
   if(wifiProv.connectWifiFromNVS())
   {
-    // while(!wifiProv.isTelemetrySent())
-    // {
-    //   delay(100);
-    // }
+    while(!OtelLogger::deviceTelemetryStatus && OtelLogger::enabled)
+    {
+      Serial.print(".");
+      delay(100);
+    }
   } 
   else
   {
@@ -57,12 +59,13 @@ void setup()
     }
     BLE::stop();
     BLE_mode = false;
-  }
+  } 
   
-  // while(!wifiProv.isTelemetrySent())
-  // {
-  //   delay(100);
-  // }
+  while(!OtelLogger::deviceTelemetryStatus && OtelLogger::enabled)
+  {
+    Serial.print(".");
+    delay(100);
+  }
 
   
   certificateHandler.print();

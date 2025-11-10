@@ -11,5 +11,10 @@
       "user_name": "device",
       "password": "device",
       "broker": "smartmasjid-broker-dev.futuriklabs.com"
+    },
+     "otel": {
+      "host_name": "http://otel.futuriklabs.com:4318/v1/logs",
+      "username": "device",
+      "password": "5m@rt5m@5j1d!"
     }
   }

@@ -8,6 +8,7 @@
 #define TEXTIFY(A) #A
 #define MQTT(State)    "MQTT state : " TEXTIFY(State)
 #define MQTT_RECONNECT_DELAY 10
+extern bool ping;
 void mqttTask(void* pvParameters);
 
 namespace MQTT
@@ -32,6 +33,7 @@ typedef enum {
   DEVICE_WIFI,
   DEVICE_PING,
   DEVICE_OTA_UPDATE,
+  DEVICE_DEBUG,
   UNKNOWN_TOPIC = 0xFF,
 } MqttTopic;
 
@@ -58,6 +60,7 @@ private:
   const char* mqttTopicWifi = "wifi";
   const char* mqttTopicPing  = "ping";
   const char* mqttTopicOta  = "update";
+  const char* mqttTopicdebug  = "debug";
 
 
 public:

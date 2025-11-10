@@ -1,3 +1,5 @@
+#define MQTT_MAX_PACKET_SIZE 8192
+
 #include <ArduinoJson.h>
 #include "Mqtt.hpp"
 #include "WifiProvisioning.hpp"
@@ -8,6 +10,9 @@
 #include"AWS_OTA.hpp"
 #include "Button.hpp"
 #include "LED.hpp"
+#include "OtelLogger.hpp"
+
+bool ping = false;
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -53,7 +58,7 @@ bool MQTTClient::connectToBroker()
 {
   loadConfigfromfile();
   mqttClient.setServer(mqttServer, mqttPort);
-  mqttClient.setBufferSize(2048);
+  mqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
   static std::string clientId = std::to_string(random(1000000000));
   Serial.print("Client id : ");
   Serial.println(clientId.c_str());
@@ -79,7 +84,8 @@ bool MQTTClient::subscribeTopics()
     mqttTopicReset,
     mqttTopicWifi,
     mqttTopicPing,
-    mqttTopicOta 
+    mqttTopicOta,
+    mqttTopicdebug
   };
   
   for (const char* topic : topicNames) 
@@ -135,6 +141,7 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
     case DEVICE_PING:
     {
       SmHttp smHttp;
+      ping = true;
       smHttp.sendDeviceTelemetry(Device::macAddress);
       break;
     }
@@ -142,11 +149,34 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
     case DEVICE_OTA_UPDATE:
     {
       AWS_OTA& ota = *AWS_OTA::getInstance();
-      char* url = SM_Json::parseDynamic((const char*)payload);
-      // char *url = "http://192.168.2.197:80/ota";
-      ota.startFirmwareUpdate(url);
+      json_urls  = SM_Json::parseDynamic((const char*)payload);
+      ota.startFirmwareUpdate(json_urls.firmware.c_str());
       break;
     }
+
+    case DEVICE_DEBUG:
+    {
+      /* need to implement */
+      Serial.println("DEBUG TOPIC");
+
+      // Expect payload "ON" or "OFF"
+      char state[8] = {0};
+      strncpy(state, (char*)payload, min(length, sizeof(state) - 1));
+
+      if (strcasecmp(state, "ON") == 0) {
+          // OtelLogger::enable(true);
+          OtelLogger::enabled = true;
+          // OtelLogger::log("INFO", "Debug logging enabled", Device::macAddress);
+      } else if (strcasecmp(state, "OFF") == 0) {
+          OtelLogger::enabled = false;
+          // OtelLogger::log("INFO", "Debug logging disabled", Device::macAddress);
+          // OtelLogger::enable(false);
+      } else {
+          Serial.println("Invalid debug payload");
+      }
+      break;
+    }
+
 
     default:
       Serial.println("UNKNOWN TOPIC");
@@ -199,6 +229,9 @@ MqttTopic MQTTClient::getTopic(const char* topic)
   else if (compareTopic(topic, mqttTopicOta)) 
   {
     return DEVICE_OTA_UPDATE;
+  }
+  else if (compareTopic(topic, mqttTopicdebug)){
+    return DEVICE_DEBUG;
   }
   return UNKNOWN_TOPIC;
 }
@@ -336,7 +369,7 @@ void MQTTClient::mqttCallback()
           if(connectToBroker(5))
           {
             WifiProvisioning::wifiServiceStarted = true;
-            Serial.println("Wifi connection established successfullly");
+            Serial.println("Wifi and MQTT connection established successfully");
             LED& rgb = *LED::getInstance();
             rgb.currentMode = MODE::WIFI_CONNECTED;
           } 

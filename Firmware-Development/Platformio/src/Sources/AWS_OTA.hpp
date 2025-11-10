@@ -26,4 +26,5 @@ class AWS_OTA
     void setup();
     bool getStatus();
     void startFirmwareUpdate(const char* url);
+    void startSpiffsUpdate(const char* url);
 };

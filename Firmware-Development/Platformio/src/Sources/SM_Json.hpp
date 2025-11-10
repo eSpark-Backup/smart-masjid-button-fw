@@ -3,6 +3,17 @@
 #include <unordered_map>
 #include <cstring>
 
+struct Json_Urls
+{
+  String firmware;
+  String spiffs;
+  String bootloader;
+  String partitions;
+  String certificate;
+};
+
+extern Json_Urls json_urls;
+
 class SM_Json 
 {
   public:
@@ -42,29 +53,24 @@ class SM_Json
       return result;
     }
   
-  static char* parseDynamic(const char* json) 
+  static Json_Urls parseDynamic(const char* json) 
     {
-        // Create a temporary DynamicJsonDocument to handle parsing
-        size_t capacity = JSON_OBJECT_SIZE(10) + strlen(json) + 1; // Adjust size based on expected JSON structure
-        DynamicJsonDocument doc(capacity);
-        DeserializationError error = deserializeJson(doc, json);
-        if (error) 
-        {
-            Serial.println("Error parsing JSON");
-            return nullptr; // Return nullptr in case of error
-        }
-        const char* url = doc["url"]; //'url' is a key in the JSON object
-        if (url == nullptr) 
-        {
-            Serial.println("URL not found in JSON");
-            return nullptr;
-        }
+      DynamicJsonDocument doc(2048);
+      Json_Urls urls;
 
-        size_t len = strlen(url) + 1;
-        char* result = new char[len];
-        memcpy(result, url, len);
+      if (deserializeJson(doc, json))
+      {
+        Serial.println("Error parsing JSON");
+        return urls;
+      }
 
-        return result; 
+      urls.firmware = doc["firmware"] | "";
+      urls.spiffs = doc["spiffs"] | "";
+      urls.bootloader = doc["bootloader"] | "";
+      urls.partitions = doc["partitions"] | "";
+      urls.certificate = doc["certificate"] | "";
+
+      return urls;
     }
   private:
     template <typename T>
