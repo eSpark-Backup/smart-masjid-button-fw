@@ -1,0 +1,6 @@
+esptool --chip esp32 merge-bin -o merge-binary/merged.bin 0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin 0x3D0000 spiffs.bin
+
+OR
+
+python -m esptool --chip esp32 merge-bin -o merge-binary/merged.bin 0x1000 bootloader.bin 0x8000 partitions.bin 0x10000 firmware.bin 0x3D0000 spiffs.bin
+

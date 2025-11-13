@@ -7,7 +7,7 @@
     "binaries": [
         {
             "address": "0x000",
-            "file": "target.bin"
+            "file": "merged.bin"
         }
     ]
 }
