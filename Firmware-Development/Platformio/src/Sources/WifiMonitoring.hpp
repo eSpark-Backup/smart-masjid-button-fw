@@ -16,7 +16,7 @@ class WifiMonitoring{
             }
             else
             {
-                LED& rgb = *LED::getInstance();
+                // LED& rgb = *LED::getInstance();
                 // rgb.currentMode = MODE::WIFI_CONNECTED;
             }
         }

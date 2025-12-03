@@ -28,6 +28,8 @@ void LED::setColor(CRGB color)
 void LED::setup()
 {
     FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
+    // FastLED.setMaxRefreshRate(400);
+    // FastLED.setDither(0);   // removes flicker
     FastLED.setBrightness(BRIGHTNESS);
 }
 
@@ -231,7 +233,7 @@ void LED::circleBlinking(CRGB color, const char *speed)
     if (strcmp(speed, "FAST") == 0)
     {
         fade_step = 15;
-        delayTime = 1;   // shorter delay for faster motion
+        delayTime = 10;   // shorter delay for faster motion
     }
     else if (strcmp(speed, "MEDIUM") == 0)
     {
@@ -301,7 +303,7 @@ void rgbLedTask(void *pvParameters)
         switch (LED::currentMode)
         {
             case MODE::BLE:
-                rgb.showBlinkingColor(rgb.goldenRod, 50); // LED behavior is Orange circle blinking at medium speed
+                rgb.showBlinkingColor(rgb.orange, 50); // LED behavior is Orange circle blinking at medium speed
                 break;
 
             case MODE::ON_POWER_UP:
@@ -321,7 +323,7 @@ void rgbLedTask(void *pvParameters)
                 break;
                 
             case MODE::WIFI_CONNECTED:
-                rgb.showSolidColor(rgb.darkgreen); // the board gets connected to WiFi but is sitting idle
+                rgb.showSolidColor(rgb.white); // the board gets connected to WiFi but is sitting idle
                 break;
 
             case MODE::ADHAN_STARTED_INTERNET_STOPPED:
@@ -354,6 +356,10 @@ void rgbLedTask(void *pvParameters)
                 rgb.showSolidColor(rgb.darkred); // LED behavior should be red 
                 break;
 
+            case MODE:: RGB_OFF:
+                rgb.turnOffLeds();
+                break;
+                
             default:
                 rgb.turnOffLeds();
                 break;

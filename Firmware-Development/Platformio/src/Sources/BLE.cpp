@@ -65,10 +65,12 @@ class ProvCharacteristicsCallbacks : public BLECharacteristicCallbacks
   {
     if (g_bleStopping) return;
     std::string rxValue = pCharacteristic->getValue();
+    Serial.println("Received length: " + String(rxValue.length()));
 
     if (rxValue.length() > 0)
     {
       char masjidId[32];
+      Serial.printf("\n-------------------Received JSON from App: %s\n", rxValue.c_str());
       if (SM_Json::parse(rxValue.c_str(), std::make_pair("masjid_id", masjidId)))
       {
         Serial.printf("Masjid id : %s\n", masjidId);
@@ -78,7 +80,7 @@ class ProvCharacteristicsCallbacks : public BLECharacteristicCallbacks
       }
       else
       {
-        Serial.println("Unable to parse masjis id");
+        Serial.println("Unable to parse masjid id");
       }
 
       char ssid[32];
@@ -167,7 +169,7 @@ bool BLE::initialize()
 void BLE::start(void) {
   g_bleStopping = false;
   Serial.println("BLE: Restarting advertising...");
-
+  
   if (pServer && pServer->getAdvertising()) {
     pServer->getAdvertising()->start();
     Serial.println("BLE: Advertising started again");

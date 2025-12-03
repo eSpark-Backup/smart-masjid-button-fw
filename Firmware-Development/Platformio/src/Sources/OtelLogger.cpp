@@ -6,14 +6,13 @@
 #include "CertificateHandler.hpp"
 #include "Mqtt.hpp"
 
-bool OtelLogger::enabled = true;
+bool OtelLogger::enabled = false;
 
 bool OtelLogger::deviceTelemetryStatus = false;
 
 String otelObj;
 String otelhost;
-String otelUsername;
-String otelPassword;
+String otelendpoint;
 
 void OtelLogger::enable(bool state) {
     enabled = state;
@@ -28,15 +27,20 @@ void loadOTELConfigfromfile() {
     StaticJsonDocument<512> doc;
     DeserializationError error = deserializeJson(doc, json);
 
+    loadConfigFromFile();
+
     if (error) {
         Serial.print("[ERROR] Failed to parse JSON: ");
         Serial.println(error.c_str());
+        OtelLogger::log("ERROR", Device::macAddress, "Failed to read config.json");
         return;
     }
 
     // Check if "otel" object exists
     if (!doc.containsKey("otel")) {
         Serial.println("[ERROR] 'otel' key not found in JSON");
+        OtelLogger::log("ERROR", Device::macAddress, " 'otel' key not found in JSON");
+        
         return;
     }
 
@@ -48,56 +52,53 @@ void loadOTELConfigfromfile() {
     else
         Serial.println("[ERROR] 'host_name' missing in 'otel'");
 
-    if (otel.containsKey("username"))
-        otelUsername = otel["username"].as<const char*>();
-    else
-        Serial.println("[ERROR] 'username' missing in 'otel'");
-
-    if (otel.containsKey("password"))
-        otelPassword = otel["password"].as<const char*>();
-    else
-        Serial.println("[ERROR] 'password' missing in 'otel'");
-
     Serial.println("[OTEL] Config Loaded:");
     Serial.print("host_name: "); Serial.println(otelhost);
-    Serial.print("username: "); Serial.println(otelUsername);
-    Serial.print("password: "); Serial.println(otelPassword);
+    OtelLogger::log("INFO", Device::macAddress, "[OTEL] Config Loaded from config.json");
 }
 
-HttpStatusCode OtelLogger::log(const char* severity, const char* macAddress,const char* ApiKey) {
+SmHttp sm_http;
+HttpStatusCode OtelLogger::log(const char* severity, const char* macAddress, const char* messsage) {
     if (!enabled && !ping) return 0;
     
     ping = false;
 
     char payload[512];
-    
-    std::string mac = macAddress;
-    std::string sev = severity;
+
+    // Old Format
+    // snprintf(payload, sizeof(payload),
+    //     R"({"macAddress":[{"resource":{"attributes":[{"key":"macAddress","value":{"stringValue":"%s"}}]},"scopeLogs":[{"logRecords":[{"severityText":"%s","stringValue":"%s"}]}]}]})",
+    //     macAddress, severity, messsage);
 
 
-    char telemetryJson[128];
-    snprintf(telemetryJson, sizeof(telemetryJson),
-        R"({"battery":"%d","macAddress":"%s"})",
-        BATTERY_HEALTH, mac.c_str());
-
+// new format        
+// { "macAddress": "9C:B8:B4:31:FD:98", "logType": "INFO", "logText": "This is a test log!" }
     snprintf(payload, sizeof(payload),
-        R"({"resourceLogs":[{"resource":{"attributes":[{"key":"macAddress","value":{"stringValue":"%s"}}]},"scopeLogs":[{"logRecords":[{"severityText":"%s","stringValue":%s}]}]}]})",
-        mac.c_str(), sev.c_str(), telemetryJson);
+        R"({"macAddress":"%s","logType":"%s","logText":"%s"})",
+        macAddress, severity, messsage);
 
-    Serial.printf("[OTEL] Payload: %s\n", payload);
-    Serial.printf("[OTEL] Size of Payload: %d\n", sizeof(payload));
-    Serial.printf("[OTEL] Size of Payload: %d\n", strlen(payload));
 
-    return sendToOtel(payload, ApiKey);
+    Serial.printf("-------------------------------[OTEL] Payload: %s\n", payload);
+    // Serial.printf("[OTEL] Size of Payload: %d\n", sizeof(payload)); // Limit
+    // Serial.printf("[OTEL] Size of Payload: %d\n", strlen(payload)); // Actual Size
+
+    // Old method
+    // return sendToOtel(payload);
+
+    // New Method
+    std::string deviceOtelUrl = std::string(otelhost.c_str());
+    deviceOtelUrl += sm_http.getOtelEndpoint();
+    // deviceOtelUrl += otelendpoint;
+
+    return sm_http.request(deviceOtelUrl.c_str(), payload);
 }
-
-HttpStatusCode OtelLogger::sendToOtel(const char* payload, const char* ApiKey) {
+HttpStatusCode OtelLogger::sendToOtel(const char* payload) {
     HTTPClient http;
     WiFiClient client;
     // client.setInsecure(); // skip cert validation
-    Serial.println("-----------------------------------[OTEL] Loading OTEL Config from file");
-    loadOTELConfigfromfile();
-    Serial.println("-----------------------------------[OTEL] Loaded OTEL Config from file");
+    // Serial.println("-----------------------------------[OTEL] Loading OTEL Config from file");
+    // loadOTELConfigfromfile();
+    // Serial.println("-----------------------------------[OTEL] Loaded OTEL Config from file");
     String url = otelhost;
     if(!http.begin(client, url)){
         Serial.println("-------------------------------[OTEL] Failed to begin HTTP connection");
@@ -106,20 +107,14 @@ HttpStatusCode OtelLogger::sendToOtel(const char* payload, const char* ApiKey) {
     // http.setAuthorization(otelUsername, otelPassword);
     http.setAuthorization(otelUsername.c_str(), otelPassword.c_str());
     http.addHeader("Content-Type", "application/json");
-    // http.addHeader("x-api-key", ApiKey);
-    Serial.println("-----------------------------------[OTEL] Sending OTEL log with ApiKey:");
-    Serial.println(ApiKey);
-    // size_t len = strlen(payload);  // safe for large payloads
     // HttpStatusCode httpCode = http.POST((uint8_t*)payload, len);
     // HttpStatusCode httpCode = http.POST((uint8_t*)payload, strlen(payload));
     HttpStatusCode httpCode = http.POST(String(payload));
-    
+    Serial.printf("-----------------------------------[OTEL] Response: %d\n", httpCode);
     if (httpCode == Http::Response::OK) {
         OtelLogger::deviceTelemetryStatus = true;
-        Serial.printf("-----------------------------------[OTEL] Response: %d\n", httpCode);
     } else {
         OtelLogger::deviceTelemetryStatus = false;
-        Serial.printf("-----------------------------------[OTEL] Error: %d\n", httpCode);
     }
     http.end();
     

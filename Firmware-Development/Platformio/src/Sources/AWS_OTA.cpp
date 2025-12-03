@@ -56,7 +56,7 @@ bool AWS_OTA::getStatus()
   {
     case HTTPS_OTA_SUCCESS:
     Serial.println("Firmware written successfully. To reboot device, call API ESP.restart() or PUSH restart button on device");
-    rgb.currentMode = rgb_last_mode;
+    
       return true;
 
     case HTTPS_OTA_FAIL:
@@ -78,6 +78,12 @@ bool AWS_OTA::getStatus()
       Serial.println("HTTPS OTA is IDLE");
       break;
 
+    case HTTPS_OTA_ERR:
+      Serial.println("HTTPS OTA ERROR");
+      rgb.currentMode = rgb_last_mode;
+      break;
+
+      
     default:
       Serial.println("Unknown OTA Status");
       rgb.currentMode = rgb_last_mode;
@@ -113,7 +119,7 @@ void AWS_OTA::startFirmwareUpdate(const char* url)
   
 }
 
-void AWS_OTA::startSpiffsUpdate(const char* url) {
+bool AWS_OTA::startSpiffsUpdate(const char* url) {
   Serial.print("Starting SPIFFS OTA from: ");
   Serial.println(url);
 
@@ -137,18 +143,23 @@ void AWS_OTA::startSpiffsUpdate(const char* url) {
 
         if (Update.end() && Update.isFinished()) {
           Serial.println("SPIFFS OTA finished successfully.");
+          return true;
         } else {
           Serial.printf("SPIFFS OTA error: %u\n", Update.getError());
+          return false;
         }
       } else {
         Serial.println("Not enough space for SPIFFS OTA.");
+        return false;
       }
     } else {
       Serial.printf("SPIFFS OTA failed, HTTP code: %d\n", httpCode);
+      return false;
     }
     https.end();
   } else {
     Serial.println("SPIFFS OTA: unable to connect to server.");
+    return false;
   }
 }
 
@@ -157,7 +168,7 @@ void awsOtaTask(void* pvParameters)
   AWS_OTA& ota = *AWS_OTA::getInstance();
   ota.setup();
   SmHttp http;
-  char otaStatus[10];  
+  char ota_Status[10];  
 
   while (true) 
   {
@@ -165,35 +176,85 @@ void awsOtaTask(void* pvParameters)
 
     if (ota.getStatus()) 
     {
-      if (http.notifyOTAUpdate(Device::macAddress)) 
-      {
-        Serial.println("Device update reported successfully");
-        strcpy(otaStatus, OTA_SUCCESS);  // Use strcpy to copy "C" into otaStatus
-        break;
-      } 
-      else 
-      {
-        Serial.println("Failed to report update to server");
-        strcpy(otaStatus, OTA_ROLL_BACK);  // Use strcpy to copy "R" into otaStatus
-        delete[] ota.deviceOtaUrl;
-        ota.deviceOtaUrl = nullptr;
-        break;
+      Serial.print("OTA STATUS: ");
+      Serial.println(otastatus);
+
+      if(otastatus == HTTPS_OTA_SUCCESS){
+        Serial.println("OTA Success");
+        strcpy(ota_Status, OTA_SUCCESS);  // Use strcpy to copy "S" into ota_Status
       }
-    }
-    if (!ota.updated) 
+      else if(otastatus == HTTPS_OTA_FAIL){
+        Serial.println("OTA Failed");
+        strcpy(ota_Status, OTA_ROLL_BACK);  // Use strcpy to copy "R" into ota_Status
+      }
+      else{
+        Serial.println("OTA Error");
+        strcpy(ota_Status, OTA_ROLL_BACK);  // Use strcpy to copy "R" into ota_Status
+      }
       break;
+      // if (http.notifyOTAUpdate(Device::macAddress)) 
+      // {
+      //   Serial.println("Device update reported successfully");
+      //   strcpy(ota_Status, OTA_SUCCESS);  // Use strcpy to copy "C" into ota_Status
+      //   break;
+      // } 
+      // else 
+      // {
+      //   Serial.println("Failed to report update to server");
+      //   strcpy(ota_Status, OTA_ROLL_BACK);  // Use strcpy to copy "R" into ota_Status
+      //   delete[] ota.deviceOtaUrl;
+      //   ota.deviceOtaUrl = nullptr;
+      //   break;
+      // }
+    }
+    else{
+      Serial.print("-*-*OTA STATUS: ");
+      Serial.println(otastatus);
+      strcpy(ota_Status, OTA_ROLL_BACK);  // Use strcpy to copy "R" into ota_Status
+    }
+
+    if (!ota.updated)  // if ota stopped or failed
+    {
+      if(otastatus == HTTPS_OTA_SUCCESS){
+        Serial.println("OTA Success");
+        strcpy(ota_Status, OTA_SUCCESS);  // Use strcpy to copy "S" into ota_Status
+      }
+      else if(otastatus == HTTPS_OTA_FAIL){
+        Serial.println("OTA Failed");
+        strcpy(ota_Status, OTA_ROLL_BACK);  // Use strcpy to copy "R" into ota_Status
+      }
+      else{
+        Serial.println("OTA Error");
+        strcpy(ota_Status, OTA_ROLL_BACK);  // Use strcpy to copy "R" into ota_Status
+      }
+      break;
+    }
     delay(1000);
   }
    // SPIFFS OTA if URL was present
-  if (strcmp(otaStatus, OTA_SUCCESS) == 0 && strlen(ota.deviceOtaUrl) > 0) {
+  if (strcmp(ota_Status, OTA_SUCCESS) == 0 && strlen(ota.deviceOtaUrl) > 0) {
     // json_urls = SM_Json::parseDynamic((const char*)pvParameters);
     if (json_urls.spiffs.length()) {
-      ota.startSpiffsUpdate(json_urls.spiffs.c_str());
+      if(ota.startSpiffsUpdate(json_urls.spiffs.c_str())){
+        if (http.notifyOTAUpdate(Device::macAddress)) 
+        {
+          Serial.println("Device update reported successfully");
+          // strcpy(ota_Status, OTA_SUCCESS);  // Use strcpy to copy "C" into ota_Status
+        } 
+        else 
+        {
+          Serial.println("Failed to report update to server");
+          // strcpy(ota_Status, OTA_ROLL_BACK);  // Use strcpy to copy "R" into ota_Status
+          delete[] ota.deviceOtaUrl;
+          ota.deviceOtaUrl = nullptr;
+        }
+      }
     }
   }
-  http.updateDeviceStatus(Device::macAddress, otaStatus);
+  http.updateDeviceStatus(Device::macAddress, ota_Status);
+  rgb.currentMode = rgb_last_mode;
 
-  if (strcmp(otaStatus, OTA_SUCCESS) == 0) 
+  if (strcmp(ota_Status, OTA_SUCCESS) == 0) 
     ESP.restart();
 
   Device::otaUpdating = false;

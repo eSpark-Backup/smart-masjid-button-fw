@@ -28,18 +28,26 @@ void setup()
   Serial.begin(115200);
   LED& rgb = *LED::getInstance();
   rgb.createTask();
-  rgb.currentMode = MODE::ON_POWER_UP; 
+  rgb.currentMode = MODE::WIFI_DISCONNECTED; 
   certificateHandler.setup();
   Device::checkMacAddress();
   Serial.printf("Arduino Stack was set to %d bytes\n", getArduinoLoopTaskStackSize());
   button.setup();
   BLE::setup(&wifiProv);
   
+  // Serial.println("------------- TESTING---------------");
+  // Serial.println("Going to sleep for 10 seconds");
+  // delay(1000);
+  // esp_sleep_enable_timer_wakeup(10 * 1000000); // 10 seconds in microseconds
+  // esp_light_sleep_start();
+  // Serial.println("Woke up from sleep after 10 seconds");
+  // Serial.println("------------- TESTING END---------------");
+
   if(wifiProv.connectWifiFromNVS())
   {
-    while(!OtelLogger::deviceTelemetryStatus && OtelLogger::enabled)
+
+    while(!wifiProv.isTelemetrySent())
     {
-      Serial.print(".");
       delay(100);
     }
   } 
@@ -60,10 +68,9 @@ void setup()
     BLE::stop();
     BLE_mode = false;
   } 
-  
-  while(!OtelLogger::deviceTelemetryStatus && OtelLogger::enabled)
+
+  while(!wifiProv.isTelemetrySent())
   {
-    Serial.print(".");
     delay(100);
   }
 
@@ -72,12 +79,15 @@ void setup()
 
   mqtt.createTask(); 
   Device::timerSetup();
+
+  loadOTELConfigfromfile();
+  OtelLogger::log("INFO", Device::macAddress, "Device Setup Complete");
 }
 
 void loop() 
 { 
   wifiMonitor.MonitorWifi();
   button.loop();
-  Device::loop();
+  Device::loop(); 
   Device::memoryMonitoring();
 }

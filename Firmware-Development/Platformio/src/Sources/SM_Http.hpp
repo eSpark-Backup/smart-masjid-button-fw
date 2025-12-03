@@ -6,6 +6,9 @@
 // #define EXTERNAL_API_KEY "b8z6X5fzbjNDGHz15XtPVzEkO3h5mCT7q4Ei8AupX9DD12PxL94rhnZHarHc8O2H"
 #define TO_MS(seconds) (seconds * 1000)
 
+extern char externalApiKey[70];
+void loadConfigFromFile();
+
 typedef int HttpStatusCode;
 
 namespace Http
@@ -36,11 +39,13 @@ class SmHttp
     const char* adhanResetEndpoint = "/external/adhan/reset";
     const char* OtaUpdateEndpoint = "/external/device/update";
     const char* otaEndpoint = "/external/device/ota";
+    const char* otelEndpoint = "/external/device/log";
     char MASJID_TEST_ID = '3';
 
 
   public:
     
+    const char* getOtelEndpoint();
     HttpStatusCode startAdhan();  
     HttpStatusCode sendDeviceTelemetry(const char* macAddress, uint8_t retryInterval, uint16_t maxRetryDuration);
     HttpStatusCode sendDeviceTelemetry(const char* macAddress);
@@ -50,5 +55,6 @@ class SmHttp
     HttpStatusCode notifyOTAUpdate(const char* macAddress);
     HttpStatusCode updateDeviceStatus(const char* macAddress, char* status);
     HttpStatusCode request(const char* url, const char* json, Http::RequestType request = Http::RequestType::POST);
-    HttpStatusCode request(const char* url, const char* json, Http::RequestType request, String* responseOut); 
+    HttpStatusCode request(const char* url, const char* json, Http::RequestType request, String* responseOut);
+    
 };

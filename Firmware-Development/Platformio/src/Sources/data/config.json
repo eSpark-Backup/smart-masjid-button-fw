@@ -1,7 +1,7 @@
 {
     "device_info": {
       "model": "SBB23V1",
-      "firmware_ver": "1.2"
+      "firmware_ver": "2.1"
     },
     "http": {
       "host": "https://smartmasjid-api-qa.futuriklabs.com",
@@ -13,8 +13,6 @@
       "broker": "smartmasjid-broker-dev.futuriklabs.com"
     },
      "otel": {
-      "host_name": "http://otel.futuriklabs.com:4318/v1/logs",
-      "username": "device",
-      "password": "5m@rt5m@5j1d!"
+      "host_name": "https://smartmasjid-api-qa.futuriklabs.com"
     }
   }

@@ -1,4 +1,4 @@
-#define MQTT_MAX_PACKET_SIZE 8192
+#define MQTT_MAX_PACKET_SIZE 9000
 
 #include <ArduinoJson.h>
 #include "Mqtt.hpp"
@@ -34,6 +34,8 @@ bool MQTTClient::setup()
 {
   if (connectToBroker(5))
   {
+    LED& rgb = *LED::getInstance();
+    rgb.currentMode = MODE::WIFI_CONNECTED;
     return true; 
   }
 
@@ -42,13 +44,15 @@ bool MQTTClient::setup()
 
 bool MQTTClient::connectToBroker(int retries) 
 {
-  while (retries--) 
+  // while (retries--) 
+  while (1) // infinite retries
   {
     if (connectToBroker() && subscribeTopics())
     { 
       return true;
     }
-     delay(MQTT_RECONNECT_DELAY * 1000);
+    check_reset_button();
+    delay(MQTT_RECONNECT_DELAY * 1000);
   }
 
   return false;
@@ -113,6 +117,7 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
   {
     case DEVICE_RESET:
       Serial.println("RESET TOPIC");
+      OtelLogger::log("INFO", Device::macAddress, "Mqtt message received on RESET Topic. Device is Resetting!");
       unsubscribeTopics();
       Device::deleteMasjidId();
       Device::deleteWificredentials();
@@ -122,6 +127,7 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
     case DEVICE_WIFI:
     {
       Serial.println("Wifi TOPIC");
+      OtelLogger::log("INFO", Device::macAddress, "Mqtt message received on Wifi Topic");
       char ssid[35];
       char pass[35];
       SM_Json::parse((const char*)payload, std::make_pair("ssid", ssid), std::make_pair("password", pass));
@@ -140,6 +146,7 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
 
     case DEVICE_PING:
     {
+      OtelLogger::log("INFO", Device::macAddress, "Mqtt message received on PING Topic. Device will send Telemetry!!");
       SmHttp smHttp;
       ping = true;
       smHttp.sendDeviceTelemetry(Device::macAddress);
@@ -150,7 +157,10 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
     {
       AWS_OTA& ota = *AWS_OTA::getInstance();
       json_urls  = SM_Json::parseDynamic((const char*)payload);
-      ota.startFirmwareUpdate(json_urls.firmware.c_str());
+      if(json_urls.firmware != NULL){
+        OtelLogger::log("INFO", Device::macAddress, "Device OTA update starts");
+        ota.startFirmwareUpdate(json_urls.firmware.c_str());
+      }
       break;
     }
 
@@ -166,13 +176,14 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
       if (strcasecmp(state, "ON") == 0) {
           // OtelLogger::enable(true);
           OtelLogger::enabled = true;
-          // OtelLogger::log("INFO", "Debug logging enabled", Device::macAddress);
+          OtelLogger::log("INFO", Device::macAddress, "Debug Logging Enabled");
       } else if (strcasecmp(state, "OFF") == 0) {
           OtelLogger::enabled = false;
-          // OtelLogger::log("INFO", "Debug logging disabled", Device::macAddress);
+          OtelLogger::log("INFO", Device::macAddress, "Debug Logging Disabled");
           // OtelLogger::enable(false);
-      } else {
-          Serial.println("Invalid debug payload");
+        } else {
+          Serial.println("Invalid Mqtt message received on topic debug");
+          OtelLogger::log("ERROR", Device::macAddress, "Invalid Message Received on debug Topic ");
       }
       break;
     }
@@ -186,7 +197,7 @@ void MQTTClient::receiveCallback(char* topic, byte* payload, unsigned int length
 
 void MQTTClient::loop() 
 {
-    if (!mqttClient.connected()) mqttCallback(); 
+    if (!mqttClient.connected() && WiFi.status() == WL_CONNECTED) mqttCallback(); 
       mqttClient.loop();
 }
 
@@ -195,6 +206,7 @@ bool MQTTClient::subscribe(const char* topic)
   if (mqttClient.subscribe(topic)) 
   {
     Serial.printf("Subscribed to %s\n", topic);
+    OtelLogger::log("INFO", Device::macAddress, "MQTT Topics Subscribed");
     return true;
   }
   return false;
@@ -205,6 +217,7 @@ bool MQTTClient::unsubscribe(const char* topic)
   if (mqttClient.unsubscribe(topic)) 
   {
     Serial.printf("Unsubscribed to %s\n", topic);
+    OtelLogger::log("ERROR", Device::macAddress, "MQTT Topics Unsubscribed");
     return true;
   }
   return false;
@@ -265,6 +278,7 @@ bool MQTTClient::extractTopicAndControlSubscription(Subscription control, const 
   else 
   {
     Serial.println("Unable to parse topic");
+    OtelLogger::log("ERROR", Device::macAddress, "Unable to parse MQTT Topic");
   }
   return ret;
 }
@@ -312,7 +326,9 @@ bool MQTTClient::unsubscribeTopics()
   {
     mqttTopicReset,
     mqttTopicWifi,
-    mqttTopicPing  
+    mqttTopicPing,
+    mqttTopicOta,
+    mqttTopicdebug  
   };
 
   for (const char* topic : topicNames) 
@@ -339,49 +355,54 @@ bool MQTTClient::unsubscribeTopics()
 void MQTTClient::mqttCallback() 
 {
       Serial.println("MQTT client not connected. Reconnecting...");
+      OtelLogger::log("ERROR", Device::macAddress, "MQTT client not connected. Reconnecting...");
       printState();
       Serial.print("WIFI RSSI : ");
       Serial.println(WiFi.RSSI());
 
-      int retryCount = 0;
-      const int maxRetries = MAX_WIFI_RETRIES;
+      // int retryCount = 0;
+      // const int maxRetries = MAX_WIFI_RETRIES;
 
-        while (WiFi.status() != WL_CONNECTED && retryCount < maxRetries) {
-          Serial.print("WiFi disconnected. Retrying (");
-          Serial.print(retryCount + 1);
-          Serial.println("/10)...");
-          WiFi.disconnect();
-          WifiProvisioning::wifiServiceStarted = false;
-          delay(1000);
-          WiFi.reconnect();
-          delay(2000); 
-          retryCount++;
-        }
+        // while (WiFi.status() != WL_CONNECTED && retryCount < maxRetries) {
+        //   Serial.print("WiFi disconnected. Retrying (");
+        //   Serial.print(retryCount + 1);
+        //   Serial.println("/10)...");
+        //   WiFi.disconnect();
+        //   WifiProvisioning::wifiServiceStarted = false;
+        //   delay(1000);
+        //   WiFi.reconnect();
+        //   delay(2000); 
+        //   retryCount++;
+        // }
         if (WiFi.status() != WL_CONNECTED){
-          Serial.println("Failed to reconnect after 10 attempts. Entering sleep mode...");
-          Serial.println("Enter Sleep mode for 5 minutes.");
-          delay(10);
-          esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 5 minute in microseconds
-          esp_light_sleep_start();
+          // Serial.println("Failed to reconnect after 10 attempts. Entering sleep mode...");
+          // OtelLogger::log("ERROR", Device::macAddress, "Failed to reconnect to after 10 attempts. Entering sleep mode for 5 minutes");
+          // Serial.println("Enter Sleep mode for 5 minutes.");
+          // delay(10);
+          // esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 5 minute in microseconds
+          // esp_light_sleep_start();
+          Serial.println("WiFi not connected.  Returning from MQTT callback.");
+          return;
         }
         else {
-          Serial.println("WiFi Reconnected Successfully!");
-          if(connectToBroker(5))
+          Serial.println("WiFi Connected, Attempting to MQTT Connection...");
+          if(connectToBroker(1)) // ignore 1, infinite retries 
           {
-            WifiProvisioning::wifiServiceStarted = true;
-            Serial.println("Wifi and MQTT connection established successfully");
             LED& rgb = *LED::getInstance();
             rgb.currentMode = MODE::WIFI_CONNECTED;
+            WifiProvisioning::wifiServiceStarted = true;
+            Serial.println("Wifi and MQTT connection established successfully");
           } 
           else 
           {
             WifiProvisioning::wifiServiceStarted = false;
-            Serial.println("Failed to established connection....");
-            Serial.println("Failed to reconnect after 5 attempts. Entering sleep mode...");
-            Serial.println("Sleep mode for 5 minutes.");
+            Serial.println("Failed to established MQTT connection....");
+            // Serial.println("Failed to reconnect to MQTT after 5 attempts. Entering sleep mode...");
+            // Serial.println("Sleep mode for 5 minutes.");
             delay(10);
-            esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 1 minute in microseconds
-            esp_light_sleep_start();
+            // esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 5 minute in microseconds
+            // esp_light_sleep_start();
+            // Serial.println("Woke up from sleep after 5 minutes");
           }
         }
 }
@@ -445,13 +466,14 @@ void mqttTask(void* pvParameters)
 
   while(1)
   {
-    if(!BLE_mode){
+    // if(!BLE_mode){
       mqtt->loop();
       if(mqtt->otaUpdating)
       {
         break;
       }
-    }
+    // }
+    vTaskDelay(10 / portTICK_PERIOD_MS);
   }
 
   vTaskDelete( NULL );

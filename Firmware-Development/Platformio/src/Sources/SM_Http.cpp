@@ -27,6 +27,10 @@ void loadConfigFromFile() {
   SM_Json::parse((const char*)(device) , std::make_pair("firmware_ver", smFirmware));
 }
 
+const char* SmHttp::getOtelEndpoint(){
+  return otelEndpoint;
+}
+
 HttpStatusCode SmHttp::startAdhan() 
 {
   loadConfigFromFile();
@@ -47,7 +51,10 @@ HttpStatusCode SmHttp::startAdhan()
 
 HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress, uint8_t retryInterval, uint16_t maxRetry) 
 {
-  HttpStatusCode status = Http::Response::UNKNOWN;;
+  HttpStatusCode status = Http::Response::UNKNOWN;
+  if(maxRetry == DEVICE_TELEMETRY_MAX_RETRIES){
+    delay(TO_MS(2)); // initial delay to wait for device add in the backend
+  }
   while (maxRetry--) 
   {
     status = sendDeviceTelemetry(macAddress);
@@ -57,7 +64,9 @@ HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress, uint8_t retry
     }
     else 
     {
-      Serial.println("Failed to send telemetry, retrying in 10 seconds...");
+      Serial.print("-----------------Failed to send telemetry ");
+      Serial.print(maxRetry);
+      Serial.println(" , retrying in 10 seconds...");
       delay(TO_MS(retryInterval));
     }
   }
@@ -69,7 +78,17 @@ HttpStatusCode SmHttp::sendDeviceTelemetry(const char* macAddress)
   
   loadConfigFromFile();
 
-  return OtelLogger::log("INFO", Device::macAddress, externalApiKey);
+  std::string deviceTelemetryUrl = smHost;
+  deviceTelemetryUrl += telemetryEndpoint;
+
+  char telemetryJson[64];
+  SM_Json::create(telemetryJson, sizeof(telemetryJson),
+                  std::make_pair("battery", BATTERY_HEALTH),
+                  std::make_pair("macAddress", Device::macAddress));
+  Serial.println(telemetryJson);
+
+  return request(deviceTelemetryUrl.c_str(), telemetryJson);
+  // return OtelLogger::log("INFO", Device::macAddress, externalApiKey);
   
 }
 
@@ -110,7 +129,8 @@ HttpStatusCode SmHttp::stopAdhan(int32_t *expiration_time)
     if (!err && doc.containsKey("adhanCalledExpiration")) {
       *expiration_time = doc["adhanCalledExpiration"];
       Serial.print("adhanCalledExpiration: ");
-      Serial.println(*expiration_time);
+      Serial.print(*expiration_time);
+      Serial.println(" seconds");
     } else {
       Serial.println("Failed to parse JSON or missing key.");
     }

@@ -17,6 +17,8 @@
 extern WiFiEventId_t wifi_reconnect_event;
 extern WiFiEventId_t wifi_gotIP_event;
 
+extern bool values_found;
+
 typedef enum
 {
   TELEMETRY_NOTSENT,

@@ -3,6 +3,7 @@
 #include "SM_Http.hpp"
 #include "Device.hpp"
 #include "esp_bt_device.h"
+#include "OtelLogger.hpp"
 
 char Device::macAddress[20] = "";
 bool Device::telemetryTrigger = false; 
@@ -40,6 +41,7 @@ void Device::loop()
   if(telemetryTrigger && !Device::otaUpdating)
   {
     Serial.println("OTA is not Updating....");
+    OtelLogger::log("INFO", Device::macAddress, "Updating Telemetry");
     Serial.println("Updating Telemetry");
     SmHttp smHttp;
     smHttp.sendDeviceTelemetry(Device::macAddress);
@@ -53,6 +55,7 @@ bool Device::deleteMasjidId()
     return false;
     
   Serial.println("Masjid Id Removed");
+  
   return true;
 }
 
@@ -61,7 +64,8 @@ bool Device::deleteWificredentials()
   if (!Sm_Nvs::del(DEVICE_WIFI_CREDENTIALS_NAMESPACE, "ssid", "pass")) 
     return false;
     
-  Serial.println("Old credential removed");
+  Serial.println("Old credentials removed");
+  OtelLogger::log("INFO", Device::macAddress, "Old credentials removed");
   return true;
 }
 
@@ -73,6 +77,7 @@ bool Device::updateWifiCredential(const char* ssid, const char* pass)
     return false;
     
   Serial.println("Wifi credentials updated");
+  OtelLogger::log("INFO", Device::macAddress, "Wifi credentials updated in NVS");
   return true;
 }
 
@@ -113,7 +118,7 @@ void Device::memoryMonitoring()
 {
   unsigned long currentTime = millis();
   static unsigned long lastExecution = 0;
-  if (currentTime - lastExecution >= DEVICE_MEMORY_INFO_PRINT_INTERVAL)
+  if (currentTime - lastExecution >= DEVICE_MEMORY_INFO_PRINT_INTERVAL) // after 5 minutes
    {
     Serial.print("1- Free Stack Space: ");
     Serial.println(uxTaskGetStackHighWaterMark(NULL));
@@ -126,12 +131,17 @@ void Device::memoryMonitoring()
     Serial.print("5- Minimum Free Heap Space: ");
     Serial.println(esp_get_minimum_free_heap_size());
     Serial.print("6- Total PSRAM: ");
-    Serial.print(ESP.getPsramSize() / 1024);
-    Serial.println(" KB");
+    Serial.println(ESP.getPsramSize() / 1024);
+    Serial.print(" KB");
     Serial.print("7- Free PSRAM: ");
-    Serial.print(ESP.getFreePsram() / 1024);
+    Serial.println(ESP.getFreePsram() / 1024);
     Serial.println(" KB ");
-    Serial.print("\n");
+    
+    char buf[512];
+    
+    snprintf(buf, sizeof(buf),"Memory Monitor 1- Free Stack Space: %u 2- Free Heap Space: %u 3- Maximum allocated Heap : %u 4- Free Heap Space: %u 5- Minimum Free Heap Space: %u 6- Total PSRAM: %u 7- Free PSRAM: %u" ,uxTaskGetStackHighWaterMark(NULL), ESP.getFreeHeap(), ESP.getMaxAllocHeap(), ESP.getFreeHeap(), esp_get_minimum_free_heap_size(), ESP.getPsramSize() / 1024, ESP.getFreePsram() / 1024);
+
+    OtelLogger::log("INFO", Device::macAddress, buf);
 
     lastExecution = currentTime;
     

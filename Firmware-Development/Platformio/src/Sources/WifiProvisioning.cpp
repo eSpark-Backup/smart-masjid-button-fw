@@ -9,32 +9,45 @@ bool ret = false;
 bool values_found = false;
 WiFiEventId_t wifi_gotIP_event;
 WiFiEventId_t wifi_reconnect_event;
+int8_t attempts = 0;
 
 static TickType_t resetButtonPressStartTime = 0;
 volatile bool WifiProvisioning::wifiServiceStarted = false;
 bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retries)
 { 
+  wifi_gotIP_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   if (ssid == NULL || pass == NULL)
   {
     return false;
   }
   
   Serial.printf("Connecting to %s...\n", ssid);
-  wifi_gotIP_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiGotIP, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_GOT_IP);
   WiFi.begin(ssid, pass);
   
-  while (WiFi.status() != WL_CONNECTED && retries-- > 0)
+  unsigned long wait_time = millis();
+  while (WiFi.status() != WL_CONNECTED && retries > 0)
   {
-    delay(1000);
-    Serial.print(".");
+    // delay(1000);
+    if (millis() - wait_time >= 1000)
+    {
+      wait_time = millis();
+      Serial.print(".");
+      if (!values_found) // If not found from nvs then retry limited times else infinite
+      {
+        retries--;
+      }  
+      delay(50);
+    }
+    
+    // Serial.print(".");
     check_reset_button();
   }
   
   if (WiFi.status() == WL_CONNECTED)
   {
     Serial.println("\n---------------------------------Connected to WiFi---------------------------------\n");
-    LED& rgb = *LED::getInstance();
-    rgb.currentMode = MODE::WIFI_CONNECTED;
+    // LED& rgb = *LED::getInstance();
+    // rgb.currentMode = MODE::WIFI_CONNECTED;
     wifi_reconnect_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiReconnect, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     wifiServiceStarted = true;
     return true;
@@ -43,13 +56,14 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   {
     WiFi.disconnect();
     Serial.println("Failed to connect to WiFi");
-    if (values_found) // from nvs
-    {
-      // esp_sleep_enable_timer_wakeup(1000000 * 6); // Sleep 6 seconds
-      Serial.println("Going to sleep for 20 minutes");
-      esp_sleep_enable_timer_wakeup(1000000 * 60 * 20); // Sleep for 20 minutes
-      esp_deep_sleep_start();
-    }
+    // if (values_found) // from nvs
+    // {
+    //   // esp_sleep_enable_timer_wakeup(1000000 * 6); // Sleep 6 seconds
+    //   Serial.println("Going to sleep for 20 minutes");
+    //   esp_sleep_enable_timer_wakeup(1000000 * 60 * 20); // Sleep for 20 minutes
+    //   esp_deep_sleep_start();
+    //   Serial.println("Woke up from sleep after 20 minutes");
+    // }
   }
 
   return false;
@@ -80,36 +94,40 @@ bool WifiProvisioning::connectWifiFromNVS(void)
     values_found = true;
   }
   
-  return connectWifi(ssid, pass);
+  return connectWifi(ssid, pass, 20);
 }
 
 void WifiProvisioning::wifiGotIP(WiFiEvent_t event, WiFiEventInfo_t info) 
 {
- Serial.print("Connected to Wi-Fi network with IP address: ");
- Serial.println(WiFi.localIP());
- 
- Serial.println("Sending Device Telemetry");
- SmHttp smHttp;
-//  ESP32 was crashing
- int httpscode = smHttp.sendDeviceTelemetry(Device::macAddress, DEVICE_TELEMETRY_RETRY_INTERVAL, DEVICE_TELEMETRY_MAX_RETRIES );
+  
+  // LED& rgb = *LED::getInstance();
+  // rgb.currentMode = MODE::WIFI_CONNECTED;
 
- switch(httpscode)
- {
-   case Http::Response::OK:
-   case Http::Response::CREATED:
-     deviceTelemetryStatus = TELEMETRY_SENT;
-     break;
+  Serial.print("----Connected to Wi-Fi network with IP address: ");
+  Serial.println(WiFi.localIP());
 
-   case Http::Response::DEVICE_NOT_FOUND:
-     Serial.println("Device Reset");
-     Device::deleteWificredentials();
-     ESP.restart();
-     break;
+  Serial.println("Sending Device Telemetry");
+  SmHttp smHttp;
+  //  ESP32 was crashing
+  int httpscode = smHttp.sendDeviceTelemetry(Device::macAddress, DEVICE_TELEMETRY_RETRY_INTERVAL, DEVICE_TELEMETRY_MAX_RETRIES );
 
-   default:
+  switch(httpscode)
+  {
+    case Http::Response::OK:
+    case Http::Response::CREATED:
+      deviceTelemetryStatus = TELEMETRY_SENT;
+      break;
+
+    case Http::Response::DEVICE_NOT_FOUND:
+      Serial.println("Device Reset");
+      Device::deleteWificredentials();
+      ESP.restart();
+      break;
+
+    default:
     //  BLE::initialize();
-     break;
- }
+      break;
+  }
 }
 
 // telemetryStatus deviceTelemetryStatus;
@@ -189,9 +207,33 @@ void WifiProvisioning::wifiReconnect(WiFiEvent_t event, WiFiEventInfo_t info)
   Serial.print("WiFi lost connection. Reason: ");
   Serial.println(info.wifi_sta_disconnected.reason);
   Serial.println("Trying to Reconnect");
-  if(WiFi.reconnect()){
-    Serial.println("Reconnected to WiFi");
-    LED& rgb = *LED::getInstance();
-    rgb.currentMode = MODE::WIFI_CONNECTED;
-  }
+  // int8_t max_tries = MAX_WIFI_RETRIES;
+  // if(WiFi.status() != WL_CONNECTED){
+    // WiFi.reconnect();
+    // if(attempts < max_tries){
+      // attempts++;
+      Serial.print("WiFi Reconnection Attempt ");
+      // Serial.println(attempts);
+      // WiFi.reconnect();
+
+      delay(1000);
+      // if(WiFi.status() != WL_CONNECTED){
+      //   Serial.println("Reconnection Failed");
+      //   return;
+      // }
+      // else{
+      //   Serial.println("Reconnected to WiFi");
+      //   LED& rgb = *LED::getInstance();
+      //   rgb.currentMode = MODE::WIFI_CONNECTED;
+      // }
+    // }
+    // else{
+    //   attempts = 0;
+    //   Serial.println("WiFi not Connected after max attempts. Entering sleep mode for 5 minutes");
+    //   delay(20);
+    //   esp_sleep_enable_timer_wakeup(SLEEP_DURATION * 60 * 1000000); // 5 minute in microseconds
+    //   esp_light_sleep_start();
+    //   Serial.println("Woke up from sleep after 5 minutes");
+    // }
+  // }
 }
