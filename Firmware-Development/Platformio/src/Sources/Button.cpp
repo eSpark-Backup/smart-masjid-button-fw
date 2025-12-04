@@ -71,7 +71,7 @@ void BLE_reinitialize(){
     // BLE::start();
   }
   Serial.println("Switching to Bluetooth mode");
-  rgb.currentMode = MODE::BLE;
+  rgb->currentMode = MODE::BLE;
   Serial.println("BLE initialized");
   Serial.println("Waiting for new Wifi Credentials...");
   while (WiFi.status() != WL_CONNECTED)
@@ -154,7 +154,7 @@ void Button::loop()
         if(smHttp.resetAdhan() == Http::Response::OK)
         {
           Serial.println("\nAdhan is Reset\n");
-          rgb.currentMode = MODE::ADHAN_RESET_MODE;
+          rgb->currentMode = MODE::ADHAN_RESET_MODE;
           Button::resetFlag = true;
           Button::counter = 0;
           buttonPressStartTime = 0;
@@ -193,8 +193,8 @@ void Button::loop()
         Serial.println("ADHAN STARTED\n");
         state = ADHAN_STARTED; // Button::counter = 2;
         Button::counter = 2; // above line is also same
-        rgb_last_mode = rgb.currentMode;
-        rgb.currentMode = MODE::ADHAN_STREAMING;
+        rgb_last_mode = rgb->currentMode;
+        rgb->currentMode = MODE::ADHAN_STREAMING;
         // Serial.print("\nADHAN_STARTED");
         Button::adhanStartTime = millis();
         stop_requested_time = 0;
@@ -205,11 +205,11 @@ void Button::loop()
           Serial.print("ADHAN NOT STARTED\n");
           state = UNPRESSED;
           Button::counter = 0;
-          if(rgb.currentMode != MODE::ADHAN_NOT_STARTED)
+          if(rgb->currentMode != MODE::ADHAN_NOT_STARTED)
           {
-            rgb_last_mode = rgb.currentMode;
+            rgb_last_mode = rgb->currentMode;
           }
-          rgb.currentMode = MODE::ADHAN_NOT_STARTED;
+          rgb->currentMode = MODE::ADHAN_NOT_STARTED;
           OtelLogger::log("ERROR", Device::macAddress, "Adhan Not Started");
         }
         ADHAN_FLAG = false;
@@ -221,7 +221,7 @@ void Button::loop()
           // expiration_time = 1800; // For testing purposes only
           smHttp.stopAdhan(&expiration_time);
           stop_requested_time = millis();
-          rgb.currentMode = MODE::ADHAN_CALLED;
+          rgb->currentMode = MODE::ADHAN_CALLED;
           Serial.print("ADHAN_STOP_REQUESTED By Button\n");
           Button::adhanStartTime = 0;
           OtelLogger::log("INFO", Device::macAddress, "Adhan Stop Requested By Button");
@@ -230,7 +230,7 @@ void Button::loop()
           state = ADHAN_STOPPED;
           Serial.print("ADHAN_STOPPED\n");
           OtelLogger::log("INFO", Device::macAddress, "Adhan Stopped");
-          rgb.currentMode = rgb_last_mode;
+          rgb->currentMode = rgb_last_mode;
           Button::counter = 0;
           stop_requested_time = 0;
           ADHAN_FLAG = false;
@@ -257,7 +257,7 @@ void Button::loop()
         Serial.print("\nADHAN_STOP_REQUESTED due to Adhan Max Duration"); 
         OtelLogger::log("INFO", Device::macAddress, "Adhan Stop Requested due to Adhan Max Duration");  
         // Button::adhanStartTime = 0;
-        rgb.currentMode = MODE::ADHAN_CALLED;
+        rgb->currentMode = MODE::ADHAN_CALLED;
         stop_requested_time = millis();
       }
       if(millis()- stop_requested_time >= expiration_time * 1000)
@@ -265,7 +265,7 @@ void Button::loop()
         state = ADHAN_STOPPED;
         Serial.print("ADHAN_STOPPED Due to Adhan Max Duration\n");
         OtelLogger::log("INFO", Device::macAddress, "Adhan Stopped");
-        rgb.currentMode = rgb_last_mode;
+        rgb->currentMode = rgb_last_mode;
         Button::counter = 0;
         stop_requested_time = 0;
         Button::adhanStartTime = 0;
@@ -281,7 +281,7 @@ void Button::loop()
   //       // expiration_time = 1800; // For testing purposes only
   //       smHttp.stopAdhan(&expiration_time);
   //       stop_requested_time = millis();
-  //       rgb.currentMode = MODE::ADHAN_CALLED;
+  //       rgb->currentMode = MODE::ADHAN_CALLED;
   //       Serial.print("ADHAN_STOP_REQUESTED\n");
   //     }
   //     if(millis()- stop_requested_time >= expiration_time * 1000)
@@ -289,7 +289,7 @@ void Button::loop()
   //       state = ADHAN_STOPPED;
   //       Serial.print("ADHAN_STOP\n");
   //       OtelLogger::log("INFO", Device::macAddress, "Adhan Stopped");
-  //       rgb.currentMode = rgb_last_mode;
+  //       rgb->currentMode = rgb_last_mode;
   //       Button::counter = 0;
   //       stop_requested_time = 0;
   //     }

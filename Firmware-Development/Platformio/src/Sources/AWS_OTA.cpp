@@ -62,11 +62,11 @@ bool AWS_OTA::getStatus()
     case HTTPS_OTA_FAIL:
       Serial.println("Firmware Upgrade Fail");
       updated = false;
-      if (rgb.currentMode == MODE::ADHAN_STREAMING) {
-        rgb.currentMode = MODE::ADHAN_STARTED_INTERNET_STOPPED;
+      if (rgb->currentMode == MODE::ADHAN_STREAMING) {
+        rgb->currentMode = MODE::ADHAN_STARTED_INTERNET_STOPPED;
       }
       else{
-        rgb.currentMode = rgb_last_mode;
+        rgb->currentMode = rgb_last_mode;
       }
       return false;
 
@@ -80,13 +80,13 @@ bool AWS_OTA::getStatus()
 
     case HTTPS_OTA_ERR:
       Serial.println("HTTPS OTA ERROR");
-      rgb.currentMode = rgb_last_mode;
+      rgb->currentMode = rgb_last_mode;
       break;
 
       
     default:
       Serial.println("Unknown OTA Status");
-      rgb.currentMode = rgb_last_mode;
+      rgb->currentMode = rgb_last_mode;
       break;
   }
   return false;
@@ -98,10 +98,10 @@ void AWS_OTA::startFirmwareUpdate(const char* url)
   Serial.print("start Firmware Update from URL: ");
   Serial.println(deviceOtaUrl);
 
-   if(rgb.currentMode != rgb_last_mode){
-    rgb_last_mode = rgb.currentMode;
+   if(rgb->currentMode != rgb_last_mode){
+    rgb_last_mode = rgb->currentMode;
   }
-  rgb.currentMode = MODE::OTA_IN_PROGRESS;
+  rgb->currentMode = MODE::OTA_IN_PROGRESS;
 
   // CertificateHandler certificateHandler;
   certificateHandler.setup();
@@ -252,7 +252,7 @@ void awsOtaTask(void* pvParameters)
     }
   }
   http.updateDeviceStatus(Device::macAddress, ota_Status);
-  rgb.currentMode = rgb_last_mode;
+  rgb->currentMode = rgb_last_mode;
 
   if (strcmp(ota_Status, OTA_SUCCESS) == 0) 
     ESP.restart();

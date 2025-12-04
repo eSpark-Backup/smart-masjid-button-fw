@@ -10,9 +10,10 @@
 #include "Sources/Mqtt.hpp"
 #include "Sources/Device.hpp"
 #include "Sources/SM_Nvs.hpp"
-#include  "Sources/CertificateHandler.hpp"
+#include "Sources/CertificateHandler.hpp"
 #include "Sources/WifiMonitoring.hpp"
 #include "Sources/OTELLogger.hpp"
+#include "Sources/LED.hpp"
 
 
 SET_LOOP_TASK_STACK_SIZE( 16*1024 ); // 16KB
@@ -26,9 +27,9 @@ WifiMonitoring wifiMonitor;
 void setup() 
 {
   Serial.begin(115200);
-  LED& rgb = *LED::getInstance();
-  rgb.createTask();
-  rgb.currentMode = MODE::WIFI_DISCONNECTED; 
+  rgb = LED::getInstance();
+  rgb->createTask();
+  rgb->currentMode = MODE::WIFI_DISCONNECTED; 
   certificateHandler.setup();
   Device::checkMacAddress();
   Serial.printf("Arduino Stack was set to %d bytes\n", getArduinoLoopTaskStackSize());

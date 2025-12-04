@@ -47,7 +47,7 @@ bool WifiProvisioning::connectWifi(const char *ssid, const char *pass, int retri
   {
     Serial.println("\n---------------------------------Connected to WiFi---------------------------------\n");
     // LED& rgb = *LED::getInstance();
-    // rgb.currentMode = MODE::WIFI_CONNECTED;
+    // rgb->currentMode = MODE::WIFI_CONNECTED;
     wifi_reconnect_event = WiFi.onEvent(std::bind(&WifiProvisioning::wifiReconnect, this, std::placeholders::_1, std::placeholders::_2), WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     wifiServiceStarted = true;
     return true;
@@ -101,7 +101,7 @@ void WifiProvisioning::wifiGotIP(WiFiEvent_t event, WiFiEventInfo_t info)
 {
   
   // LED& rgb = *LED::getInstance();
-  // rgb.currentMode = MODE::WIFI_CONNECTED;
+  // rgb->currentMode = MODE::WIFI_CONNECTED;
 
   Serial.print("----Connected to Wi-Fi network with IP address: ");
   Serial.println(WiFi.localIP());
@@ -224,7 +224,7 @@ void WifiProvisioning::wifiReconnect(WiFiEvent_t event, WiFiEventInfo_t info)
       // else{
       //   Serial.println("Reconnected to WiFi");
       //   LED& rgb = *LED::getInstance();
-      //   rgb.currentMode = MODE::WIFI_CONNECTED;
+      //   rgb->currentMode = MODE::WIFI_CONNECTED;
       // }
     // }
     // else{

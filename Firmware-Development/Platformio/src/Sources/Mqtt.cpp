@@ -34,8 +34,8 @@ bool MQTTClient::setup()
 {
   if (connectToBroker(5))
   {
-    LED& rgb = *LED::getInstance();
-    rgb.currentMode = MODE::WIFI_CONNECTED;
+    // LED& rgb = *LED::getInstance();
+    rgb->currentMode = MODE::WIFI_CONNECTED;
     return true; 
   }
 
@@ -388,8 +388,7 @@ void MQTTClient::mqttCallback()
           Serial.println("WiFi Connected, Attempting to MQTT Connection...");
           if(connectToBroker(1)) // ignore 1, infinite retries 
           {
-            LED& rgb = *LED::getInstance();
-            rgb.currentMode = MODE::WIFI_CONNECTED;
+            rgb->currentMode = MODE::WIFI_CONNECTED;
             WifiProvisioning::wifiServiceStarted = true;
             Serial.println("Wifi and MQTT connection established successfully");
           } 

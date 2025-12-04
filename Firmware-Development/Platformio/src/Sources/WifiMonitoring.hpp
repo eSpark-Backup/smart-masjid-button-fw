@@ -10,14 +10,13 @@ class WifiMonitoring{
             if(!WiFi.isConnected() || WifiProvisioning::wifiServiceStarted == false)
             { 
                 if(!BLE_mode){
-                    LED& rgb = *LED::getInstance();
-                    rgb.currentMode = MODE::WIFI_DISCONNECTED;
+                    rgb->currentMode = MODE::WIFI_DISCONNECTED;
                 }
             }
             else
             {
                 // LED& rgb = *LED::getInstance();
-                // rgb.currentMode = MODE::WIFI_CONNECTED;
+                // rgb->currentMode = MODE::WIFI_CONNECTED;
             }
         }
 };

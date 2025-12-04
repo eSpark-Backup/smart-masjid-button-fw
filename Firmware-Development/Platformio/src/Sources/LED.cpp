@@ -3,7 +3,7 @@
 
 MODE rgb_last_mode = RGB_OFF;
 
-LED rgb;
+LED* rgb = nullptr;
 CRGBPalette16 LED::currentPalette;
 MODE LED::currentMode = MODE::RGB_OFF;
 AdhanStatus LED::ADHAN_FLAG = AdhanStatus::NO_STREAMING;
@@ -27,7 +27,7 @@ void LED::setColor(CRGB color)
 
 void LED::setup()
 {
-    FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
+    FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
     // FastLED.setMaxRefreshRate(400);
     // FastLED.setDither(0);   // removes flicker
     FastLED.setBrightness(BRIGHTNESS);
@@ -287,81 +287,81 @@ void LED::createTask()
 void rgbLedTask(void *pvParameters)
 {
     // delay(3000);
-    rgb.setup();
-    rgb.orange = CHSV(HUE_ORANGE, 255, 255);
-    rgb.red = CHSV(HUE_RED, 255, 255);
-    rgb.green = CHSV(HUE_GREEN, 255, 255);
-    rgb.darkgreen = CRGB::DarkGreen;
-    rgb.goldenRod = CRGB::DarkGoldenrod;   // hsv(43, 94%, 72%)
-    rgb.white = CHSV(0, 0, 255); // White color
-    rgb.darkred = CRGB::DarkRed;
+    rgb->setup();
+    rgb->orange = CHSV(HUE_ORANGE, 255, 255);
+    rgb->red = CHSV(HUE_RED, 255, 255);
+    rgb->green = CHSV(HUE_GREEN, 255, 255);
+    rgb->darkgreen = CRGB::DarkGreen;
+    rgb->goldenRod = CRGB::DarkGoldenrod;   // hsv(43, 94%, 72%)
+    rgb->white = CHSV(0, 0, 255); // White color
+    rgb->darkred = CRGB::DarkRed;
 
-    // rgb.turnOffLeds();
+    // rgb->turnOffLeds();
 
     while (1)
     {
         switch (LED::currentMode)
         {
             case MODE::BLE:
-                rgb.showBlinkingColor(rgb.orange, 50); // LED behavior is Orange circle blinking at medium speed
+                rgb->showBlinkingColor(rgb->orange, 50); // LED behavior is Orange circle blinking at medium speed
                 break;
 
             case MODE::ON_POWER_UP:
-                rgb.showSolidColor(rgb.white); // LED behavior should be white
+                rgb->showSolidColor(rgb->white); // LED behavior should be white
                 break;
 
             case MODE::ADHAN_STREAMING:
-                rgb.circleBlinking(rgb.green, "MEDIUM"); // LED behavior should be Green circle blinking at medium speed
+                rgb->circleBlinking(rgb->green, "MEDIUM"); // LED behavior should be Green circle blinking at medium speed
                 break;
                 
             case MODE::ADHAN_CALLED:
-                rgb.showSolidColor(rgb.green); // LED behavior should be green
+                rgb->showSolidColor(rgb->green); // LED behavior should be green
                 break;
 
             case MODE::ADHAN_RESET_MODE:
-                rgb.showSolidColor(rgb.white); // LED behavior should be white
+                rgb->showSolidColor(rgb->white); // LED behavior should be white
                 break;
                 
             case MODE::WIFI_CONNECTED:
-                rgb.showSolidColor(rgb.white); // the board gets connected to WiFi but is sitting idle
+                rgb->showSolidColor(rgb->white); // the board gets connected to WiFi but is sitting idle
                 break;
 
             case MODE::ADHAN_STARTED_INTERNET_STOPPED:
-                if(rgb.blinkColorNTimes(rgb.darkred, 100, 3)) // LED should blink dark red 3 times
+                if(rgb->blinkColorNTimes(rgb->darkred, 100, 3)) // LED should blink dark red 3 times
                 {
-                    rgb.currentMode = MODE::ADHAN_STREAMING;
+                    rgb->currentMode = MODE::ADHAN_STREAMING;
                 }
                 break;
             case MODE::ADHAN_NOT_STARTED:
-                if(rgb.blinkColorNTimes(rgb.darkred, 50, 3)) // LED should fade blink dark red 3 times
-                // if(rgb.blinkColorNTimes(rgb.darkred, 250, 3)) // LED should blink dark red 3 times
+                if(rgb->blinkColorNTimes(rgb->darkred, 50, 3)) // LED should fade blink dark red 3 times
+                // if(rgb->blinkColorNTimes(rgb->darkred, 250, 3)) // LED should blink dark red 3 times
                 {
-                    rgb.currentMode = rgb_last_mode;
+                    rgb->currentMode = rgb_last_mode;
                 }
                 break;
 
             case MODE::OTA_IN_PROGRESS:
-                rgb.showBlinkingColor(rgb.white, 100); // LED behavior should be white
+                rgb->showBlinkingColor(rgb->white, 100); // LED behavior should be white
                 break;
 
             case MODE::BATTRY_IS_CHARGING:
-                rgb.showSolidColor(rgb.green); // It should show Green light constantly if USB power is plugged in
+                rgb->showSolidColor(rgb->green); // It should show Green light constantly if USB power is plugged in
                 break;
 
             case MODE::LOW_BATTERY:
-                rgb.showSolidColor(rgb.red); // LED behavior is Red constant only when there is no USB charger plugged in
+                rgb->showSolidColor(rgb->red); // LED behavior is Red constant only when there is no USB charger plugged in
                 break;
 
             case MODE::WIFI_DISCONNECTED:
-                rgb.showSolidColor(rgb.darkred); // LED behavior should be red 
+                rgb->showSolidColor(rgb->darkred); // LED behavior should be red 
                 break;
 
             case MODE:: RGB_OFF:
-                rgb.turnOffLeds();
+                rgb->turnOffLeds();
                 break;
                 
             default:
-                rgb.turnOffLeds();
+                rgb->turnOffLeds();
                 break;
         }
     }

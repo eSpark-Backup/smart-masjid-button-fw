@@ -1,29 +1,19 @@
 #pragma once
 
-// #define FASTLED_WS2812_T1 580 // T0H
-// #define FASTLED_WS2812_T2 2000 // T1H
-// #define FASTLED_WS2812_T3 400
+#define FASTLED_WS2812_T1 570
+#define FASTLED_WS2812_T2 1500
+#define FASTLED_WS2812_T3 930
 
-
-// #define FASTLED_WS2812_T1 680 // T0H
-// #define FASTLED_WS2812_T2 900 // T1H 
-// #define FASTLED_WS2812_T3 50000
-// #define FASTLED_WS2812_T3 10000
-
-#define FASTLED_WS2812_T1 400
-#define FASTLED_WS2812_T2 850
-#define FASTLED_WS2812_T3 2000
-
-#include<Arduino.h>
+#include <Arduino.h>
 #include <FastLED.h>
 
-#define DATA_PIN     25 // DATA_PIN
-#define NUM_LEDS    6
-#define BRIGHTNESS 100
-#define LED_TYPE    WS2812B // WS2812B is not functioning 
-#define COLOR_ORDER GRB
-#define UPDATES_PER_SECOND 1000
-#define FADE_DURATION 10
+#define DATA_PIN             25 // DATA_PIN
+#define NUM_LEDS             6
+#define BRIGHTNESS           100
+#define LED_TYPE             WS2812B // WS2812B is not functioning 
+#define COLOR_ORDER          GRB
+#define UPDATES_PER_SECOND   1000
+#define FADE_DURATION        10
 
 typedef enum MODE 
 { 
@@ -87,4 +77,4 @@ class LED
     void createTask();
 };
 
-extern LED rgb;
+extern LED* rgb;

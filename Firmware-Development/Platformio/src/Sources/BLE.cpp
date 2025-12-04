@@ -159,8 +159,7 @@ bool BLE::initialize()
   // Start advertising
   pServer->getAdvertising()->start();
   Serial.println("Waiting a client connection to notify...");
-  LED &rgb = *LED::getInstance();
-  rgb.currentMode = MODE::BLE;
+  rgb->currentMode = MODE::BLE;
   status = BLE_STARTED;
   return true;
 }
@@ -223,7 +222,7 @@ void BLE::start(void) {
 //   pProvCharacteristic = nullptr;
 
 //   LED &rgb = *LED::getInstance();
-//   rgb.currentMode = MODE::WIFI_CONNECTED;
+//   rgb->currentMode = MODE::WIFI_CONNECTED;
 //   WifiProvisioning::wifiServiceStarted = true;
 //   status = BLE_STOPPED;
 
