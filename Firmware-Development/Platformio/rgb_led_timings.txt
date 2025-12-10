@@ -1,0 +1,33 @@
+On these timings rgb leds working fine below 5.0 voltages
+#define FASTLED_WS2812_T1 380
+#define FASTLED_WS2812_T2 1000
+#define FASTLED_WS2812_T3 620
+
+On these timings rgb leds working fine below 5.4V
+#define FASTLED_WS2812_T1 500
+#define FASTLED_WS2812_T2 750
+#define FASTLED_WS2812_T3 50000
+
+
+On these timings rgb leds working fine above 4.9V
+#define FASTLED_WS2812_T1 760
+#define FASTLED_WS2812_T2 2000
+#define FASTLED_WS2812_T3 1240
+
+
+On these timings rgb leds working fine below5.1V
+#define FASTLED_WS2812_T1 400
+#define FASTLED_WS2812_T2 850
+#define FASTLED_WS2812_T3 50000
+
+On these timings rgb leds working fine below 5.2V
+#define FASTLED_WS2812_T1 450
+#define FASTLED_WS2812_T2 800
+#define FASTLED_WS2812_T3 50000
+
+On these timings rgb leds working fine below 5.3V
+#define FASTLED_WS2812_T1 500
+#define FASTLED_WS2812_T2 750
+#define FASTLED_WS2812_T3 50000
+
+

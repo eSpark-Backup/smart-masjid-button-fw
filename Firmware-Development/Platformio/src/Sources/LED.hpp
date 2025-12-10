@@ -1,8 +1,12 @@
 #pragma once
 
-#define FASTLED_WS2812_T1 570
-#define FASTLED_WS2812_T2 1500
-#define FASTLED_WS2812_T3 930
+// #define FASTLED_WS2812_T1 570
+// #define FASTLED_WS2812_T2 1500
+// #define FASTLED_WS2812_T3 930
+
+#define FASTLED_WS2812_T1 500
+#define FASTLED_WS2812_T2 750
+#define FASTLED_WS2812_T3 50000
 
 #include <Arduino.h>
 #include <FastLED.h>
